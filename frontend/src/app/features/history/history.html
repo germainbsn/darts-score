@@ -1,0 +1,26 @@
+<h1>Historique</h1>
+
+@if (!games().length) {
+  <p>Aucune partie enregistrée pour l'instant.</p>
+} @else {
+  <div class="list">
+    @for (g of games(); track g.id) {
+      <button type="button" class="item" (click)="open(g.id)">
+        <div class="main">
+          <span class="type">{{ typeLabel(g) }}</span>
+          <span class="players">{{ g.players.join(' · ') }}</span>
+        </div>
+        <div class="side">
+          <span>🏆 {{ winnerName(g) }}</span>
+          <span class="date">{{ dateLabel(g) }}</span>
+        </div>
+      </button>
+    }
+  </div>
+
+  <div class="pager">
+    <button type="button" [disabled]="page() === 0" (click)="loadPage(page() - 1)">← Précédent</button>
+    <span>Page {{ page() + 1 }} / {{ totalPages() }}</span>
+    <button type="button" [disabled]="page() + 1 >= totalPages()" (click)="loadPage(page() + 1)">Suivant →</button>
+  </div>
+}

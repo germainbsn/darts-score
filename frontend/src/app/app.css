@@ -1,0 +1,13 @@
+.topnav {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 16px;
+}
+
+.topnav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;
+}

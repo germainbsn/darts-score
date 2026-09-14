@@ -6,6 +6,9 @@ import com.triplevingt.game.dto.UpdateLogRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +41,12 @@ public class GameController {
     @GetMapping
     public List<GameResponse> list(@RequestParam(required = false) String status) {
         return service.list(status).stream().map(GameResponse::from).toList();
+    }
+
+    @GetMapping("/history")
+    public Page<GameResponse> history(
+            @PageableDefault(size = 20, sort = "finishedAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        return service.history(pageable).map(GameResponse::from);
     }
 
     @PatchMapping("/{id}")

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CreateGameRequest, Game } from './models';
+import { CreateGameRequest, Game, PageResponse } from './models';
 import { MatchStandings } from './match-standings';
 
 const BASE_URL = 'http://localhost:8080/api/games';
@@ -29,6 +29,10 @@ export class GameApiService {
 
   abandon(id: string): Observable<Game> {
     return this.http.post<Game>(`${BASE_URL}/${id}/abandon`, {});
+  }
+
+  history(page: number, size = 20): Observable<PageResponse<Game>> {
+    return this.http.get<PageResponse<Game>>(`${BASE_URL}/history`, { params: { page, size } });
   }
 
   matchStandings(matchId: string): Observable<MatchStandings> {

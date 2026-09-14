@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -62,6 +64,10 @@ public class GameService {
         return status == null
                 ? repository.findAll()
                 : repository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    public Page<Game> history(Pageable pageable) {
+        return repository.findByStatusOrderByFinishedAtDesc("finished", pageable);
     }
 
     // The client sends only the new `log`; status/winnerIndex/finishedAt are

@@ -37,6 +37,14 @@ export interface Game {
   finishedAt: string | null;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // current page index, 0-based
+  size: number;
+}
+
 export interface CreateGameRequest {
   type: GameType;
   variant?: number | null;
