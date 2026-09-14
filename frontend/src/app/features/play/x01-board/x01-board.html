@@ -1,0 +1,50 @@
+@if (store.game(); as game) {
+  @if (store.x01State(); as st) {
+
+    <app-post-game-actions />
+
+    <table>
+      <thead>
+        <tr>
+          @for (name of game.players; track $index) {
+            <th [class.current]="$index === st.currentPlayer && !st.finished">{{ name }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          @for (name of game.players; track $index) {
+            <td>{{ st.totals[$index] }}</td>
+          }
+        </tr>
+      </tbody>
+    </table>
+
+    @if (!st.finished) {
+      @if (pendingConfirm()) {
+        <div class="confirm">
+          <span>Fermeture sur un double ?</span>
+          <button type="button" (click)="confirmDouble(true)">Oui</button>
+          <button type="button" (click)="confirmDouble(false)">Non (raté)</button>
+        </div>
+      } @else {
+        <div class="pad">
+          <div class="display">{{ input() || '0' }}</div>
+          <div class="keypad">
+            @for (k of ['7','8','9','4','5','6','1','2','3']; track k) {
+              <button type="button" (click)="press(k)">{{ k }}</button>
+            }
+            <button type="button" (click)="clear()">C</button>
+            <button type="button" (click)="press('0')">0</button>
+            <button type="button" (click)="backspace()">⌫</button>
+          </div>
+          <button type="button" class="btn" (click)="submit()">Valider le tour</button>
+        </div>
+      }
+      <button type="button" (click)="undo()">Annuler le dernier tour</button>
+    }
+
+  }
+} @else {
+  <p>Chargement…</p>
+}

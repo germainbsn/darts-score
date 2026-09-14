@@ -6,6 +6,8 @@ import com.triplevingt.game.dto.CreateGameRequest;
 import com.triplevingt.game.engine.EngineResult;
 import com.triplevingt.game.engine.GameEngineDispatcher;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -29,7 +31,7 @@ public class GameService {
         g.setDoubleOut(Boolean.TRUE.equals(req.doubleOut()));
         g.setFinishMode(req.finishMode());
         g.setClockMultiplier(req.clockMultiplier());
-        g.setClockOrder(req.clockOrder());
+        g.setClockOrder(buildClockOrder(req));
         g.setMatchId(req.matchId());
         g.setLegsToWin(req.legsToWin());
         g.setSetsToWin(req.setsToWin());
@@ -38,6 +40,17 @@ public class GameService {
         g.setStatus("in_progress");
         g.setCreatedAt(Instant.now());
         return repository.save(g);
+    }
+
+    // One shuffled sequence of all 21 targets (1-20 plus a 21st "finish" slot
+    // for the bull), generated server-side so a client can't hand us a
+    // pre-arranged "random" order. Sequential mode stores no order at all.
+    private List<Integer> buildClockOrder(CreateGameRequest req) {
+        if (!"clock".equals(req.type()) || !"random".equals(req.clockOrderMode())) return null;
+        List<Integer> order = new ArrayList<>();
+        for (int i = 1; i <= 21; i++) order.add(i);
+        Collections.shuffle(order);
+        return order;
     }
 
     public Game get(UUID id) {
@@ -56,7 +69,7 @@ public class GameService {
     public Game updateLog(UUID id, JsonNode log) {
         Game g = get(id);
         g.setLog(log);
-        EngineResult result = GameEngineDispatcher.compute(g.getType(), g.getPlayers(), log);
+        EngineResult result = GameEngineDispatcher.compute(g, log);
         g.setStatus(result.finished() ? "finished" : "in_progress");
         g.setWinnerIndex(result.winnerIndex());
         g.setFinishedAt(result.finished() ? Instant.now() : null);

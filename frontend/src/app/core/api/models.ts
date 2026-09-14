@@ -7,6 +7,17 @@ export interface CricketLogEntry {
   mult: number; // 1 (simple), 2 (double), 3 (triple)
 }
 
+export interface X01LogEntry {
+  player: number;
+  attempted: number;
+  confirmedDouble: boolean;
+}
+
+export interface ClockLogEntry {
+  player: number;
+  hit: boolean;
+}
+
 export interface Game {
   id: string;
   type: GameType;
@@ -32,7 +43,9 @@ export interface CreateGameRequest {
   doubleOut?: boolean;
   finishMode?: string | null;
   clockMultiplier?: string | null;
-  clockOrder?: number[] | null;
+  // "sequential" (default) or "random" — the server generates the actual
+  // shuffled clockOrder itself.
+  clockOrderMode?: string | null;
   matchId?: string | null;
   legsToWin?: number | null;
   setsToWin?: number | null;

@@ -1,5 +1,62 @@
 <h1>Triple Vingt</h1>
-<h2>Nouvelle partie — Cricket</h2>
+<h2>Nouvelle partie</h2>
+
+<div class="field">
+  <label>Mode de jeu</label>
+  <div class="segmented">
+    <button type="button" [class.active]="setupType() === 'cricket'" (click)="setType('cricket')">Cricket</button>
+    <button type="button" [class.active]="setupType() === '301'" (click)="setType('301')">301</button>
+    <button type="button" [class.active]="setupType() === '501'" (click)="setType('501')">501</button>
+    <button type="button" [class.active]="setupType() === 'score'" (click)="setType('score')">Score</button>
+    <button type="button" [class.active]="setupType() === 'clock'" (click)="setType('clock')">Horloge</button>
+  </div>
+</div>
+
+@if (setupType() === '301' || setupType() === '501') {
+  <div class="field">
+    <label class="checkline">
+      <input type="checkbox" [checked]="doubleOut()" (change)="doubleOut.set($any($event.target).checked)" />
+      Fermeture sur un double obligatoire
+    </label>
+  </div>
+}
+
+@if (setupType() === 'score') {
+  <div class="field">
+    <label>Nombre de lancers (3 fléchettes)</label>
+    <div class="stepper">
+      <button type="button" (click)="setRoundsCount(roundsCount() - 1)">−</button>
+      <span>{{ roundsCount() }}</span>
+      <button type="button" (click)="setRoundsCount(roundsCount() + 1)">+</button>
+    </div>
+  </div>
+}
+
+@if (setupType() === 'clock') {
+  <div class="field">
+    <label>Finir sur</label>
+    <div class="segmented">
+      <button type="button" [class.active]="clockFinishMode() === 'any'" (click)="clockFinishMode.set('any')">25 ou 50</button>
+      <button type="button" [class.active]="clockFinishMode() === 'outer'" (click)="clockFinishMode.set('outer')">25</button>
+      <button type="button" [class.active]="clockFinishMode() === 'bull'" (click)="clockFinishMode.set('bull')">50</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Touché requis</label>
+    <div class="segmented">
+      <button type="button" [class.active]="clockMultiplier() === 'any'" (click)="clockMultiplier.set('any')">Simple</button>
+      <button type="button" [class.active]="clockMultiplier() === 'double'" (click)="clockMultiplier.set('double')">Doubles</button>
+      <button type="button" [class.active]="clockMultiplier() === 'triple'" (click)="clockMultiplier.set('triple')">Triples</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Ordre des cibles</label>
+    <div class="segmented">
+      <button type="button" [class.active]="clockOrderMode() === 'sequential'" (click)="clockOrderMode.set('sequential')">Croissant</button>
+      <button type="button" [class.active]="clockOrderMode() === 'random'" (click)="clockOrderMode.set('random')">Aléatoire</button>
+    </div>
+  </div>
+}
 
 <div class="field">
   <label>Joueurs</label>
@@ -9,6 +66,25 @@
     <button type="button" (click)="setPlayerCount(playerCount() + 1)">+</button>
   </div>
 </div>
+
+@if (playerCount() > 1) {
+  <div class="field">
+    <label>Manches gagnantes (par set)</label>
+    <div class="stepper">
+      <button type="button" (click)="setLegsToWin(legsToWin() - 1)">−</button>
+      <span>{{ legsToWin() }}</span>
+      <button type="button" (click)="setLegsToWin(legsToWin() + 1)">+</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Sets gagnants</label>
+    <div class="stepper">
+      <button type="button" (click)="setSetsToWin(setsToWin() - 1)">−</button>
+      <span>{{ setsToWin() }}</span>
+      <button type="button" (click)="setSetsToWin(setsToWin() + 1)">+</button>
+    </div>
+  </div>
+}
 
 <div class="field">
   @for (name of names(); track $index) {

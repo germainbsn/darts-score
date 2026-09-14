@@ -1,0 +1,7 @@
+@if (winnerText(); as text) {
+  <p class="winner">{{ text }}</p>
+  <div class="actions">
+    <button type="button" (click)="undo()">Annuler le dernier tour</button>
+    <button type="button" class="btn" (click)="playAgain()">{{ nextLabel() }}</button>
+  </div>
+}

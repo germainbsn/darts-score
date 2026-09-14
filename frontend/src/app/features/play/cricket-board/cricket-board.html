@@ -1,9 +1,7 @@
 @if (store.game(); as game) {
   @if (store.cricketState(); as st) {
 
-    @if (st.finished && st.winnerIndex !== null) {
-      <p class="winner">🏆 {{ game.players[st.winnerIndex] }} remporte la partie !</p>
-    }
+    <app-post-game-actions />
 
     <table>
       <thead>
@@ -49,8 +47,6 @@
           <button type="button" (click)="undo()">Annuler la dernière fléchette</button>
         </div>
       </div>
-    } @else {
-      <button type="button" (click)="undo()">Annuler le dernier tour</button>
     }
 
   }

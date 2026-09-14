@@ -2,8 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CreateGameRequest, Game } from './models';
+import { MatchStandings } from './match-standings';
 
 const BASE_URL = 'http://localhost:8080/api/games';
+const MATCHES_URL = 'http://localhost:8080/api/matches';
 
 @Injectable({ providedIn: 'root' })
 export class GameApiService {
@@ -27,5 +29,9 @@ export class GameApiService {
 
   abandon(id: string): Observable<Game> {
     return this.http.post<Game>(`${BASE_URL}/${id}/abandon`, {});
+  }
+
+  matchStandings(matchId: string): Observable<MatchStandings> {
+    return this.http.get<MatchStandings>(`${MATCHES_URL}/${matchId}/standings`);
   }
 }

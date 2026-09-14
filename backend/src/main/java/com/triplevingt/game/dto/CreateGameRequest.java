@@ -12,7 +12,9 @@ public record CreateGameRequest(
         Boolean doubleOut,
         String finishMode,
         String clockMultiplier,
-        List<Integer> clockOrder,
+        // "sequential" (default) or "random" — the server generates the actual
+        // shuffled clockOrder itself rather than trusting a client-supplied one.
+        String clockOrderMode,
         UUID matchId,
         Integer legsToWin,
         Integer setsToWin,

@@ -1,0 +1,39 @@
+@if (store.game(); as game) {
+  @if (store.clockState(); as st) {
+
+    <app-post-game-actions />
+
+    <table>
+      <thead>
+        <tr>
+          @for (name of game.players; track $index) {
+            <th [class.current]="$index === st.currentPlayer && !st.finished">{{ name }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          @for (name of game.players; track $index; let pi = $index) {
+            <td>{{ st.hits[pi] >= 21 ? '✓' : targetLabel(st.hits[pi]) }}</td>
+          }
+        </tr>
+        <tr>
+          @for (name of game.players; track $index; let pi = $index) {
+            <td class="sub">{{ st.darts[pi] }} flé</td>
+          }
+        </tr>
+      </tbody>
+    </table>
+
+    @if (!st.finished) {
+      <div class="pad">
+        <button type="button" class="btn" (click)="hit()">{{ targetLabel(st.hits[st.currentPlayer]) }}</button>
+        <button type="button" (click)="miss()">✕</button>
+      </div>
+      <button type="button" (click)="undo()">Annuler la dernière fléchette</button>
+    }
+
+  }
+} @else {
+  <p>Chargement…</p>
+}

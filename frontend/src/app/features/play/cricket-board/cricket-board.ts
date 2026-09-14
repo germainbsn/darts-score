@@ -1,26 +1,20 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
 import { GameStore } from '../../../core/state/game-store';
 import { CRICKET_LABELS, CRICKET_NUMBERS } from '../../../engine/cricket-engine';
+import { PostGameActions } from '../post-game-actions/post-game-actions';
 
 @Component({
-  imports: [],
+  imports: [PostGameActions],
   selector: 'app-cricket-board',
   styleUrl: './cricket-board.css',
   templateUrl: './cricket-board.html',
 })
-export class CricketBoard implements OnInit {
-  private readonly route = inject(ActivatedRoute);
+export class CricketBoard {
   readonly store = inject(GameStore);
 
   readonly numbers = CRICKET_NUMBERS;
   readonly labels = CRICKET_LABELS;
   readonly selectedMult = signal(1);
-
-  ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.store.load(id);
-  }
 
   setMult(mult: number): void {
     this.selectedMult.set(mult);

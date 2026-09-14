@@ -1,0 +1,10 @@
+.winner {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}

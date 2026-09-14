@@ -1,0 +1,9 @@
+@if (store.game(); as game) {
+  @switch (game.type) {
+    @case ('cricket') { <app-cricket-board /> }
+    @case ('clock') { <app-clock-board /> }
+    @default { <app-x01-board /> }
+  }
+} @else {
+  <p>Chargement…</p>
+}

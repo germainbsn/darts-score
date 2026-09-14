@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GameRepository extends JpaRepository<Game, UUID> {
     List<Game> findByStatusOrderByCreatedAtDesc(String status);
+    List<Game> findByMatchIdOrderByCreatedAtAsc(UUID matchId);
 }
