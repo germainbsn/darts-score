@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: backend
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: ${BACKEND_PORT:8080}

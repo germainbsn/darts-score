@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:triplevingt}
+    username: ${POSTGRES_USER:triplevingt}
+    password: ${POSTGRES_PASSWORD:change-me}
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200

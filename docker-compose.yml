@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-triplevingt}
+      POSTGRES_USER: ${POSTGRES_USER:-triplevingt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - triplevingt_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-triplevingt} -d ${POSTGRES_DB:-triplevingt}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  triplevingt_pgdata:
