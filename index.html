@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triple Vingt</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+      <circle cx="22" cy="22" r="20" fill="var(--surface-2)" stroke="var(--rule)"/>
+      <circle cx="22" cy="22" r="15.5" fill="none" stroke="var(--red)" stroke-width="5.5"/>
+      <circle cx="22" cy="22" r="9.5" fill="none" stroke="var(--green)" stroke-width="5.5"/>
+      <circle cx="22" cy="22" r="3.4" fill="var(--gold)"/>
+    </svg>
+    <div class="brand-text">
+      <h1>Triple Vingt</h1>
+      <p class="tag">Marqueur de fléchettes maison</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <nav class="tabs" id="mainTabs">
+      <button class="tab active" data-tab="home" type="button">Nouvelle partie</button>
+      <button class="tab" data-tab="history" type="button">Historique</button>
+      <button class="tab" data-tab="stats" type="button">Stats</button>
+      <button class="tab" data-tab="ranking" type="button">Classement</button>
+    </nav>
+    <button class="ghost small" id="soundToggle" type="button" aria-label="Couper le son">🔊</button>
+  </div>
+</header>
+
+<main>
+  <section id="view-home" class="view">
+    <div id="offlineNotice" class="notice" hidden>
+      Mode sans sauvegarde&nbsp;: la connexion au classeur n'a pas pu être établie. Cette partie restera jouable mais ne sera pas conservée ni synchronisée entre appareils.
+    </div>
+    <div id="activeBanner" class="active-banner" hidden>
+      <span>Une partie est en cours&nbsp;: <strong id="activeBannerText"></strong></span>
+      <span style="display:flex; gap:8px;">
+        <button class="btn" id="resumeBtn" type="button">Reprendre la partie</button>
+        <button class="ghost danger" id="homeAbandonBtn" type="button">Abandonner</button>
+      </span>
+    </div>
+    <div id="homeAbandonConfirm" class="confirm-panel" hidden>
+      <span>Abandonner cette partie en cours&nbsp;? Elle ne sera pas comptée dans l'historique.</span>
+      <span style="display:flex; gap:8px;">
+        <button class="btn small" id="homeAbandonYes" type="button">Oui, abandonner</button>
+        <button class="ghost small" id="homeAbandonNo" type="button">Annuler</button>
+      </span>
+    </div>
+    <div class="panels">
+      <div class="panel">
+        <h2>Nouvelle partie</h2>
+        <form id="setupForm">
+          <div class="field">
+            <label>Mode de jeu</label>
+            <div class="segmented" id="typeSeg">
+              <button type="button" data-type="cricket" class="active">Cricket</button>
+              <button type="button" data-type="301">301</button>
+              <button type="button" data-type="501">501</button>
+              <button type="button" data-type="score">Score</button>
+              <button type="button" data-type="clock">Horloge</button>
+            </div>
+          </div>
+          <div class="field" id="doubleOutField" hidden>
+            <label class="checkline"><input type="checkbox" id="doubleOutCheck" checked> Fermeture sur un double obligatoire</label>
+          </div>
+          <div class="field" id="clockFinishField" hidden>
+            <label>Finir sur</label>
+            <div class="segmented" id="clockFinishSeg">
+              <button type="button" data-finish="any" class="active">25 ou 50</button>
+              <button type="button" data-finish="outer">25</button>
+              <button type="button" data-finish="bull">50</button>
+            </div>
+          </div>
+          <div class="field" id="clockMultiplierField" hidden>
+            <label>Touché requis</label>
+            <div class="segmented" id="clockMultiplierSeg">
+              <button type="button" data-mult="any" class="active">Simple</button>
+              <button type="button" data-mult="double">Doubles uniquement</button>
+              <button type="button" data-mult="triple">Triples uniquement</button>
+            </div>
+          </div>
+          <div class="field" id="clockOrderField" hidden>
+            <label>Ordre des cibles</label>
+            <div class="segmented" id="clockOrderSeg">
+              <button type="button" data-order="sequential" class="active">Croissant</button>
+              <button type="button" data-order="random">Aléatoire</button>
+            </div>
+          </div>
+          <div class="field" id="roundsField" hidden>
+            <label>Nombre de lancers (3 fléchettes)</label>
+            <div class="stepper">
+              <button type="button" id="roundsMinus">−</button>
+              <span class="count mono" id="roundsCount">10</span>
+              <button type="button" id="roundsPlus">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Joueurs</label>
+            <div class="stepper">
+              <button type="button" id="playerMinus">−</button>
+              <span class="count mono" id="playerCount">2</span>
+              <button type="button" id="playerPlus">+</button>
+            </div>
+          </div>
+          <div class="field" id="matchLegsField" hidden>
+            <label>Manches gagnantes (par set)</label>
+            <div class="stepper">
+              <button type="button" id="legsMinus">−</button>
+              <span class="count mono" id="legsCount">1</span>
+              <button type="button" id="legsPlus">+</button>
+            </div>
+          </div>
+          <div class="field" id="matchSetsField" hidden>
+            <label>Sets gagnants</label>
+            <div class="stepper">
+              <button type="button" id="setsMinus">−</button>
+              <span class="count mono" id="setsCount">1</span>
+              <button type="button" id="setsPlus">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="name-inputs" id="nameInputs"></div>
+            <datalist id="playersDatalist"></datalist>
+          </div>
+          <button class="btn" type="submit">Lancer la partie</button>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Tableau des scores</h2>
+        <div class="stat-tiles" id="statTiles"><p class="stat-empty">Aucune partie terminée pour l'instant.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-history" class="view" hidden>
+    <h2>Historique des parties</h2>
+    <div class="history-list" id="historyList"><p class="history-empty">Aucune partie enregistrée pour l'instant. Lance ta première partie !</p></div>
+  </section>
+
+  <section id="view-stats" class="view" hidden>
+    <div id="statsPlayerListWrap">
+      <h2>Statistiques par joueur</h2>
+      <div class="history-list" id="statsPlayerList"><p class="history-empty">Aucune partie terminée pour l'instant.</p></div>
+    </div>
+    <div id="statsPlayerDetail" hidden>
+      <div class="play-header">
+        <button class="ghost" id="statsBackBtn" type="button">← Joueurs</button>
+        <h2 id="statsPlayerName"></h2>
+        <button class="ghost danger" id="deletePlayerBtn" type="button">Supprimer ce joueur</button>
+      </div>
+      <div id="deletePlayerConfirm" class="confirm-panel" hidden>
+        <span id="deletePlayerConfirmText"></span>
+        <span style="display:flex; gap:8px;">
+          <button class="btn small" id="deletePlayerYes" type="button">Oui, supprimer</button>
+          <button class="ghost small" id="deletePlayerNo" type="button">Annuler</button>
+        </span>
+      </div>
+      <div class="field">
+        <label>Filtrer par mode</label>
+        <select id="statsFilterType">
+          <option value="all">Toutes les parties</option>
+          <option value="cricket">Cricket</option>
+          <option value="301">301</option>
+          <option value="501">501</option>
+          <option value="score">Score</option>
+          <option value="clock-any">Horloge — Simple</option>
+          <option value="clock-double">Horloge — Doubles</option>
+          <option value="clock-triple">Horloge — Triples</option>
+        </select>
+      </div>
+      <div class="stats-summary">
+        <div class="panel">
+          <div class="stat-total" id="statsGamesPlayed">0</div>
+          <div class="stat-total-label">parties jouées</div>
+        </div>
+        <div class="panel">
+          <div class="stat-total" id="statsWinPct">0%</div>
+          <div class="stat-total-label">victoires</div>
+        </div>
+        <div class="panel" id="statsThirdTile" hidden>
+          <div class="stat-total" id="statsThirdValue">0.0</div>
+          <div class="stat-total-label" id="statsThirdLabel"></div>
+        </div>
+      </div>
+      <div class="chart-card" id="statsTopCard" hidden>
+        <div class="chart-card-head">
+          <h3 id="statsTopTitle">Top 10</h3>
+        </div>
+        <div class="history-list" id="statsTopList"></div>
+      </div>
+      <div class="chart-card" id="mprChartCard" hidden>
+        <div class="chart-card-head">
+          <h3>MPR dans le temps</h3>
+          <div class="segmented small" id="mprPeriodSeg">
+            <button type="button" data-period="day">Jour</button>
+            <button type="button" data-period="week" class="active">Semaine</button>
+            <button type="button" data-period="month">Mois</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="mprChartWrap">
+          <svg id="mprChartSvg"></svg>
+          <div class="chart-tooltip" id="mprChartTooltip" hidden></div>
+        </div>
+        <p class="chart-empty" id="mprChartEmpty" hidden>Pas assez de parties Cricket pour tracer une courbe.</p>
+      </div>
+      <div class="chart-card" id="avg3ChartCard" hidden>
+        <div class="chart-card-head">
+          <h3>Moyenne aux 3 fléchettes dans le temps</h3>
+          <div class="segmented small" id="avg3PeriodSeg">
+            <button type="button" data-period="day">Jour</button>
+            <button type="button" data-period="week" class="active">Semaine</button>
+            <button type="button" data-period="month">Mois</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="avg3ChartWrap">
+          <svg id="avg3ChartSvg"></svg>
+          <div class="chart-tooltip" id="avg3ChartTooltip" hidden></div>
+        </div>
+        <p class="chart-empty" id="avg3ChartEmpty" hidden>Pas assez de parties pour tracer une courbe.</p>
+      </div>
+      <div class="chart-card" id="clockChartCard" hidden>
+        <div class="chart-card-head">
+          <h3>Fléchettes pour terminer dans le temps</h3>
+          <div class="segmented small" id="clockChartPeriodSeg">
+            <button type="button" data-period="day">Jour</button>
+            <button type="button" data-period="week" class="active">Semaine</button>
+            <button type="button" data-period="month">Mois</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="clockChartWrap">
+          <svg id="clockChartSvg"></svg>
+          <div class="chart-tooltip" id="clockChartTooltip" hidden></div>
+        </div>
+        <p class="chart-empty" id="clockChartEmpty" hidden>Pas assez de parties d'Horloge terminées pour tracer une courbe.</p>
+      </div>
+      <div class="chart-card" id="clockNumberStatsCard" hidden>
+        <div class="chart-card-head">
+          <h3>Taux de réussite par numéro</h3>
+          <div class="segmented small" id="clockNumberPeriodSeg">
+            <button type="button" data-period="day">Jour</button>
+            <button type="button" data-period="week" class="active">Semaine</button>
+            <button type="button" data-period="month">Mois</button>
+          </div>
+        </div>
+        <div class="segmented small" id="clockNumberSortSeg">
+          <button type="button" data-sort="number" class="active">Numéro</button>
+          <button type="button" data-sort="asc">Taux croissant</button>
+          <button type="button" data-sort="desc">Taux décroissant</button>
+        </div>
+        <div class="stat-tiles" id="clockNumberStatsList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-ranking" class="view" hidden>
+    <h2>Classement</h2>
+    <div class="field">
+      <label>Classer par</label>
+      <select id="rankingStat">
+        <option value="winpct">Victoires (%)</option>
+        <option value="mpr">MPR (Cricket)</option>
+        <option value="avg3">Moyenne aux 3 fléchettes (301/501)</option>
+        <option value="bestscore">Meilleurs scores (Score)</option>
+        <option value="clockdarts">Le moins de fléchettes (Horloge)</option>
+      </select>
+    </div>
+    <div class="field" id="rankingRoundsField" hidden>
+      <label>Nombre de lancers</label>
+      <select id="rankingRoundsFilter">
+        <option value="all">Toutes les longueurs</option>
+      </select>
+    </div>
+    <div class="field" id="rankingClockField" hidden>
+      <label>Règle de fin</label>
+      <select id="rankingClockFilter">
+        <option value="all">Toutes les règles</option>
+        <option value="any">25 ou 50</option>
+        <option value="outer">25</option>
+        <option value="bull">50</option>
+      </select>
+    </div>
+    <div class="history-list" id="rankingList"><p class="history-empty">Aucune partie terminée pour l'instant.</p></div>
+  </section>
+
+  <section id="view-play" class="view" hidden>
+    <div class="play-header">
+      <button class="ghost" id="backBtn" type="button">← Accueil</button>
+      <div class="play-title" id="playTitle"></div>
+      <button class="ghost danger" id="abandonBtn" type="button">Abandonner</button>
+    </div>
+    <div id="abandonConfirm" class="confirm-panel" hidden>
+      <span>Abandonner cette partie&nbsp;? Elle ne sera pas comptée dans l'historique.</span>
+      <span style="display:flex; gap:8px;">
+        <button class="btn small" id="abandonYes" type="button">Oui, abandonner</button>
+        <button class="ghost small" id="abandonNo" type="button">Annuler</button>
+      </span>
+    </div>
+    <div id="winnerBanner" class="winner-banner" hidden></div>
+    <div id="topBadge" class="top-badge" hidden></div>
+
+    <div id="postGameActions" class="post-game-actions" hidden>
+      <button class="ghost" id="postGameUndoBtn" type="button">Annuler le dernier tour</button>
+      <button class="btn" id="playAgainBtn" type="button">Rejouer</button>
+    </div>
+
+    <div class="chart-card" id="gameChartCard" hidden>
+      <div class="chart-card-head">
+        <h3 id="gameChartTitle">Évolution du score</h3>
+        <div class="chart-legend" id="gameChartLegend"></div>
+      </div>
+      <div class="chart-wrap" id="gameChartWrap">
+        <svg id="gameChartSvg"></svg>
+        <div class="chart-tooltip" id="gameChartTooltip" hidden></div>
+      </div>
+    </div>
+
+    <div id="cricketBoard" hidden>
+      <div class="board-scroll"><table class="cricket-table" id="cricketTable"></table></div>
+      <div class="dart-pad" id="dartPad">
+        <div class="mult-chips" id="multChips">
+          <button type="button" class="chip active" data-mult="1">Simple</button>
+          <button type="button" class="chip" data-mult="2">Double</button>
+          <button type="button" class="chip" data-mult="3">Triple</button>
+        </div>
+        <div class="num-grid" id="numGrid"></div>
+        <div class="pad-actions">
+          <button class="ghost danger" id="missBtn" type="button">✕</button>
+          <button class="ghost" id="undoCricketBtn" type="button">Annuler la dernière fléchette</button>
+        </div>
+        <div class="turn-status">
+          <span id="cricketTurnLabel"></span>
+          <span class="dart-dots" id="dartDots"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="x01Board" hidden>
+      <div class="x01-players" id="x01Players"></div>
+      <div class="notice checkout-hint" id="checkoutHint" hidden></div>
+      <div class="x01-pad" id="x01Pad">
+        <div class="entry-mode-toggle" id="x01EntryModeSeg">
+          <button type="button" data-mode="total" class="active">Total sur 3</button>
+          <button type="button" data-mode="darts">Fléchette par fléchette</button>
+        </div>
+        <div id="x01TotalMode">
+          <div class="keypad-row">
+            <div class="keypad-display mono" id="x01Display">0</div>
+          </div>
+          <div class="keypad" id="x01Keypad"></div>
+        </div>
+
+        <div id="x01DartMode" hidden>
+          <div class="dart-slots" id="dartSlots">
+            <div class="dart-slot"></div>
+            <div class="dart-slot"></div>
+            <div class="dart-slot"></div>
+          </div>
+          <div class="mult-chips" id="x01MultChips">
+            <button type="button" class="chip active" data-mult="1">Simple</button>
+            <button type="button" class="chip" data-mult="2">Double</button>
+            <button type="button" class="chip" data-mult="3">Triple</button>
+          </div>
+          <div class="x01-dart-grid" id="x01DartGrid"></div>
+        </div>
+
+        <div id="checkoutConfirm" class="confirm-panel" hidden>
+          <span>Fermeture sur un double&nbsp;?</span>
+          <span style="display:flex; gap:8px;">
+            <button class="btn small" id="checkoutYes" type="button">Oui</button>
+            <button class="ghost small" id="checkoutNo" type="button">Non (raté)</button>
+          </span>
+        </div>
+        <div class="pad-actions">
+          <button class="btn" id="x01Submit" type="button">Valider le tour</button>
+          <button class="ghost" id="undoX01Btn" type="button">Annuler le dernier tour</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="clockBoard" hidden>
+      <div class="x01-players" id="clockPlayers"></div>
+      <div class="dart-pad" id="clockPad">
+        <div class="clock-actions">
+          <button type="button" class="btn clock-target-btn" id="clockHitBtn">1</button>
+          <button type="button" class="ghost danger clock-miss-btn" id="clockMissBtn">✕</button>
+          <button type="button" class="ghost danger clock-miss-btn" id="clockMiss2Btn">✕✕</button>
+          <button type="button" class="ghost danger clock-miss-btn" id="clockMiss3Btn">✕✕✕</button>
+        </div>
+        <div class="pad-actions">
+          <button class="ghost" id="undoClockBtn" type="button">Annuler la dernière fléchette</button>
+        </div>
+        <div class="turn-status">
+          <span id="clockTurnLabel"></span>
+          <span class="dart-dots" id="clockDartDots"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="throw-log" id="throwLog"><p class="empty">Les fléchettes jouées apparaîtront ici.</p></div>
+  </section>
+</main>
+
+<script src="js/constants.js"></script>
+<script src="js/dom.js"></script>
+<script src="js/state.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/store.js"></script>
+<script src="js/cricket.js"></script>
+<script src="js/x01.js"></script>
+<script src="js/clock.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
