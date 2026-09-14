@@ -1,0 +1,59 @@
+@if (store.game(); as game) {
+  @if (store.cricketState(); as st) {
+
+    @if (st.finished && st.winnerIndex !== null) {
+      <p class="winner">🏆 {{ game.players[st.winnerIndex] }} remporte la partie !</p>
+    }
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cible</th>
+          @for (name of game.players; track $index) {
+            <th [class.current]="$index === st.currentPlayer && !st.finished">{{ name }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (num of numbers; track num; let ni = $index) {
+          <tr>
+            <th>{{ labels[num] }}</th>
+            @for (name of game.players; track $index) {
+              <td>{{ st.marks[$index][ni] }}</td>
+            }
+          </tr>
+        }
+        <tr>
+          <th>Score</th>
+          @for (name of game.players; track $index) {
+            <td>{{ st.scores[$index] }}</td>
+          }
+        </tr>
+      </tbody>
+    </table>
+
+    @if (!st.finished) {
+      <div class="dart-pad">
+        <div class="mult-chips">
+          <button type="button" [class.active]="selectedMult() === 1" (click)="setMult(1)">Simple</button>
+          <button type="button" [class.active]="selectedMult() === 2" (click)="setMult(2)">Double</button>
+          <button type="button" [class.active]="selectedMult() === 3" (click)="setMult(3)">Triple</button>
+        </div>
+        <div class="num-grid">
+          @for (num of numbers; track num) {
+            <button type="button" (click)="hit(num)">{{ labels[num] }}</button>
+          }
+        </div>
+        <div class="pad-actions">
+          <button type="button" (click)="miss()">✕</button>
+          <button type="button" (click)="undo()">Annuler la dernière fléchette</button>
+        </div>
+      </div>
+    } @else {
+      <button type="button" (click)="undo()">Annuler le dernier tour</button>
+    }
+
+  }
+} @else {
+  <p>Chargement…</p>
+}

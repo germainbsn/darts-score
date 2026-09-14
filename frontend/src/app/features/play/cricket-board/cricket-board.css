@@ -1,0 +1,31 @@
+.winner {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.mult-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mult-chips button.active {
+  background: #333;
+  color: #fff;
+}
+
+.num-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.num-grid button {
+  padding: 14px 0;
+}
+
+.pad-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
