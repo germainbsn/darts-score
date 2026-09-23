@@ -23,7 +23,7 @@ var els = {};
   'avg3ChartCard', 'avg3PeriodSeg', 'avg3ChartWrap', 'avg3ChartSvg', 'avg3ChartTooltip', 'avg3ChartEmpty',
   'clockChartCard', 'clockChartPeriodSeg', 'clockChartWrap', 'clockChartSvg', 'clockChartTooltip', 'clockChartEmpty',
   'clockNumberStatsCard', 'clockNumberPeriodSeg', 'clockNumberSortSeg', 'clockNumberStatsList',
-  'rankingStat', 'rankingList', 'rankingRoundsField', 'rankingRoundsFilter', 'rankingClockField', 'rankingClockFilter',
+  'rankingStat', 'rankingList', 'rankingX01Field', 'rankingX01Filter', 'rankingRoundsField', 'rankingRoundsFilter', 'rankingClockField', 'rankingClockFilter',
   'roundsField', 'roundsCount', 'roundsMinus', 'roundsPlus', 'soundToggle',
   'clockFinishField', 'clockFinishSeg', 'clockMultiplierField', 'clockMultiplierSeg', 'clockOrderField', 'clockOrderSeg', 'clockBoard', 'clockPlayers', 'clockPad', 'clockHitBtn', 'clockMissBtn', 'clockMiss2Btn', 'clockMiss3Btn', 'undoClockBtn', 'clockTurnLabel', 'clockDartDots'
 ].forEach(function (id) {

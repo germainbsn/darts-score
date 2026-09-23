@@ -280,7 +280,7 @@ els.playAgainBtn.addEventListener('click', async function () {
 // ranking definition.
 function statsFilterTypeForGame(game) {
   if (game.type === 'cricket') return 'cricket';
-  if (game.type === 'x01') return String(game.variant);
+  if (game.type === 'x01') return String(game.variant) + (game.doubleOut ? '-double' : '-simple');
   if (game.type === 'score') return 'score';
   if (game.type === 'clock') return 'clock-' + (game.clockMultiplier === 'double' ? 'double' : game.clockMultiplier === 'triple' ? 'triple' : 'any');
   return null;
@@ -585,12 +585,22 @@ function uniquePlayerNames() {
 // its own stats bucket instead of being averaged together.
 function isClockFilter(f) { return f === 'clock-any' || f === 'clock-double' || f === 'clock-triple'; }
 function clockFilterVariant(f) { return f === 'clock-double' ? 'double' : f === 'clock-triple' ? 'triple' : 'any'; }
+// 301/501 can be finished on a double or on any dart ("sortie simple"), which
+// isn't the same challenge — a double-out average isn't comparable to a
+// straight-out one — so each variant also gets its own double/simple bucket,
+// same idea as Horloge's Simple/Doubles/Triples split above. The plain
+// '301'/'501' filters stay as the "toutes sorties" combined view.
+function isX01Filter(f) { return f === '301' || f === '501' || f === '301-double' || f === '301-simple' || f === '501-double' || f === '501-simple'; }
+function x01FilterVariant(f) { return f.indexOf('301') === 0 ? 301 : 501; }
+function x01FilterDoubleOut(f) { return f.indexOf('-double') !== -1 ? true : f.indexOf('-simple') !== -1 ? false : null; }
 function statsForPlayer(name, filterType) {
   var games = historyGames.filter(function (g) {
     if (g.players.indexOf(name) === -1) return false;
     if (filterType === 'cricket') return g.type === 'cricket';
-    if (filterType === '301') return g.type === 'x01' && g.variant === 301;
-    if (filterType === '501') return g.type === 'x01' && g.variant === 501;
+    if (isX01Filter(filterType)) {
+      var doubleOut = x01FilterDoubleOut(filterType);
+      return g.type === 'x01' && g.variant === x01FilterVariant(filterType) && (doubleOut === null || !!g.doubleOut === doubleOut);
+    }
     if (filterType === 'x01') return g.type === 'x01';
     if (filterType === 'score') return g.type === 'score';
     if (isClockFilter(filterType)) return g.type === 'clock' && (g.clockMultiplier || 'any') === clockFilterVariant(filterType);
@@ -640,7 +650,11 @@ function statsForPlayer(name, filterType) {
 var STATS_TOP_LABELS = {
   cricket: 'Top 100 — meilleur MPR',
   301: 'Top 100 — meilleure moyenne aux 3 fléchettes',
+  '301-double': 'Top 100 — meilleure moyenne aux 3 fléchettes (double sortie)',
+  '301-simple': 'Top 100 — meilleure moyenne aux 3 fléchettes (sortie simple)',
   501: 'Top 100 — meilleure moyenne aux 3 fléchettes',
+  '501-double': 'Top 100 — meilleure moyenne aux 3 fléchettes (double sortie)',
+  '501-simple': 'Top 100 — meilleure moyenne aux 3 fléchettes (sortie simple)',
   score: 'Top 100 — meilleurs scores',
   'clock-any': 'Top 100 — le moins de fléchettes pour terminer',
   'clock-double': 'Top 100 — le moins de fléchettes pour terminer (doubles)',
@@ -650,8 +664,10 @@ function topGamesForPlayer(name, filterType) {
   var games = historyGames.filter(function (g) {
     if (g.players.indexOf(name) === -1) return false;
     if (filterType === 'cricket') return g.type === 'cricket';
-    if (filterType === '301') return g.type === 'x01' && g.variant === 301;
-    if (filterType === '501') return g.type === 'x01' && g.variant === 501;
+    if (isX01Filter(filterType)) {
+      var doubleOut = x01FilterDoubleOut(filterType);
+      return g.type === 'x01' && g.variant === x01FilterVariant(filterType) && (doubleOut === null || !!g.doubleOut === doubleOut);
+    }
     if (filterType === 'score') return g.type === 'score';
     if (isClockFilter(filterType)) {
       return g.type === 'clock' && (g.clockMultiplier || 'any') === clockFilterVariant(filterType)
@@ -724,7 +740,7 @@ function renderStatsDetail() {
     els.statsThirdTile.hidden = false;
     els.statsThirdLabel.textContent = 'MPR moyen';
     els.statsThirdValue.textContent = st.mpr.toFixed(1);
-  } else if (statsFilterType === '301' || statsFilterType === '501' || statsFilterType === 'score') {
+  } else if (isX01Filter(statsFilterType) || statsFilterType === 'score') {
     els.statsThirdTile.hidden = false;
     els.statsThirdLabel.textContent = 'Moyenne aux 3 fléchettes';
     els.statsThirdValue.textContent = st.avg3.toFixed(1);
@@ -773,10 +789,11 @@ function mprTrendData(name, period) {
     return { label: chartBucketLabel(key, period), value: b.darts ? (b.marks / b.darts * 3) : 0, count: b.darts };
   });
 }
-function avg3TrendData(name, variant, period) {
+function avg3TrendData(name, variant, period, doubleOut) {
   var buckets = {};
   historyGames.forEach(function (g) {
     if (g.type !== 'x01' || g.variant !== variant || !g.finishedAt || g.players.indexOf(name) === -1) return;
+    if (doubleOut !== null && !!g.doubleOut !== doubleOut) return;
     var pi = g.players.indexOf(name);
     var xs = x01DartStats(g)[pi];
     var key = chartBucketKey(g.finishedAt, period);
@@ -888,10 +905,10 @@ els.mprPeriodSeg.addEventListener('click', function (e) {
 
 var avg3ChartPeriod = 'week';
 function renderAvg3Chart() {
-  var show = !!statsSelectedPlayer && (statsFilterType === '301' || statsFilterType === '501');
+  var show = !!statsSelectedPlayer && isX01Filter(statsFilterType);
   els.avg3ChartCard.hidden = !show;
   if (!show) return;
-  var data = avg3TrendData(statsSelectedPlayer, parseInt(statsFilterType, 10), avg3ChartPeriod);
+  var data = avg3TrendData(statsSelectedPlayer, x01FilterVariant(statsFilterType), avg3ChartPeriod, x01FilterDoubleOut(statsFilterType));
   renderTrendChart(data, { wrap: els.avg3ChartWrap, svg: els.avg3ChartSvg, tooltip: els.avg3ChartTooltip, empty: els.avg3ChartEmpty }, 'avg3', 'moy/3',
     function (d) { return d.count + ' flé'; });
 }
@@ -1070,14 +1087,14 @@ els.deletePlayerYes.addEventListener('click', async function () {
 });
 
 // ---------- ranking tab ----------
-function computeRanking(statKey) {
+function computeRanking(statKey, x01Filter) {
   var rows = uniquePlayerNames().map(function (name) {
     if (statKey === 'mpr') {
       var cs = statsForPlayer(name, 'cricket');
       return { name: name, games: cs.played, value: cs.mpr, display: cs.mpr.toFixed(1) + ' mpr' };
     }
     if (statKey === 'avg3') {
-      var xs = statsForPlayer(name, 'x01');
+      var xs = statsForPlayer(name, x01Filter || 'x01');
       return { name: name, games: xs.played, value: xs.avg3, display: xs.avg3.toFixed(1) + ' moy/3' };
     }
     var ws = statsForPlayer(name, 'all');
@@ -1161,12 +1178,14 @@ function renderBestClock() {
 function renderRanking() {
   var isBestScore = els.rankingStat.value === 'bestscore';
   var isClockDarts = els.rankingStat.value === 'clockdarts';
+  var isAvg3 = els.rankingStat.value === 'avg3';
   els.rankingRoundsField.hidden = !isBestScore;
   els.rankingClockField.hidden = !isClockDarts;
+  els.rankingX01Field.hidden = !isAvg3;
   if (isBestScore) { renderBestScores(); return; }
   if (isClockDarts) { renderBestClock(); return; }
 
-  var rows = computeRanking(els.rankingStat.value);
+  var rows = computeRanking(els.rankingStat.value, els.rankingX01Filter.value);
   if (!rows.length) {
     els.rankingList.innerHTML = '<p class="history-empty">Aucune partie terminée pour l\'instant.</p>';
     return;
@@ -1178,6 +1197,7 @@ function renderRanking() {
   }).join('');
 }
 els.rankingStat.addEventListener('change', renderRanking);
+els.rankingX01Filter.addEventListener('change', renderRanking);
 els.rankingRoundsFilter.addEventListener('change', renderBestScores);
 els.rankingClockFilter.addEventListener('change', renderBestClock);
 
