@@ -200,6 +200,16 @@ main{max-width:920px; margin:0 auto; padding-top:22px;}
 button.history-item{width:100%; text-align:left; cursor:pointer; font:inherit; color:inherit;}
 button.history-item:hover{border-color:var(--gold);}
 .history-item .chev{color:var(--ink-soft); font-family:"Bebas Neue"; font-size:1.3rem;}
+
+.history-item .hi-open{
+  background:none; border:none; padding:0; margin:0; flex:1; min-width:0;
+  text-align:left; cursor:pointer; font:inherit; color:inherit;
+}
+.history-item .hi-open:hover .hi-players{color:var(--gold);}
+.history-item .hi-right{display:flex; align-items:center; gap:12px;}
+.history-item .hi-delete{
+  flex:none; padding:6px 10px; font-size:.9rem; line-height:1; border-radius:8px;
+}
 .rank-num{color:var(--ink-soft); font-weight:700; margin-right:10px;}
 
 #statsPlayerListWrap, #statsPlayerDetail{display:flex; flex-direction:column; gap:16px;}

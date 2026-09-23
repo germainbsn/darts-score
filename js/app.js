@@ -24,6 +24,7 @@ function setTab(tab) {
   if (tab === 'play' && activeGame) renderPlay(activeGame);
   if (tab === 'stats') showStatsList();
   if (tab === 'ranking') renderRanking();
+  if (tab === 'history') { els.deleteGameConfirm.hidden = true; pendingDeleteGameId = null; }
 }
 els.mainTabs.addEventListener('click', function (e) {
   var b = e.target.closest('.tab');
@@ -557,9 +558,11 @@ function renderHistory() {
       : (g.variant + (g.doubleOut ? ' · double sortie' : ''));
     var winner = g.winnerIndex != null ? g.players[g.winnerIndex] : '—';
     var date = g.finishedAt ? new Date(g.finishedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-    html += '<button type="button" class="history-item" data-game-id="' + g.id + '"><div class="hi-main"><span class="hi-type">' + typeLabel + '</span>'
-      + '<span class="hi-players">' + g.players.map(escapeHtml).join(' · ') + '</span></div>'
-      + '<div style="text-align:right"><div>🏆 ' + escapeHtml(winner) + '</div><div class="hi-date">' + date + '</div></div></button>';
+    html += '<div class="history-item">'
+      + '<button type="button" class="hi-open" data-game-id="' + g.id + '"><div class="hi-main"><span class="hi-type">' + typeLabel + '</span>'
+      + '<span class="hi-players">' + g.players.map(escapeHtml).join(' · ') + '</span></div></button>'
+      + '<div class="hi-right"><div style="text-align:right"><div>🏆 ' + escapeHtml(winner) + '</div><div class="hi-date">' + date + '</div></div>'
+      + '<button type="button" class="ghost danger hi-delete" data-delete-id="' + g.id + '" aria-label="Supprimer cette partie">✕</button></div></div>';
   });
   els.historyList.innerHTML = html;
 }
@@ -568,10 +571,28 @@ function openGameFromList(id) {
   watchGame(id);
   setTab('play');
 }
+var pendingDeleteGameId = null;
 els.historyList.addEventListener('click', function (e) {
+  var del = e.target.closest('[data-delete-id]');
+  if (del) {
+    pendingDeleteGameId = del.dataset.deleteId;
+    els.deleteGameConfirmText.textContent = 'Supprimer définitivement cette partie de l\'historique ?';
+    els.deleteGameConfirm.hidden = false;
+    return;
+  }
   var b = e.target.closest('[data-game-id]');
   if (!b) return;
   openGameFromList(b.dataset.gameId);
+});
+els.deleteGameNo.addEventListener('click', function () {
+  pendingDeleteGameId = null;
+  els.deleteGameConfirm.hidden = true;
+});
+els.deleteGameYes.addEventListener('click', async function () {
+  els.deleteGameConfirm.hidden = true;
+  if (!pendingDeleteGameId) return;
+  await Store.deleteGame(pendingDeleteGameId);
+  pendingDeleteGameId = null;
 });
 
 // ---------- stats tab: player list + per-player detail ----------

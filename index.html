@@ -140,6 +140,13 @@
 
   <section id="view-history" class="view" hidden>
     <h2>Historique des parties</h2>
+    <div id="deleteGameConfirm" class="confirm-panel" hidden>
+      <span id="deleteGameConfirmText"></span>
+      <span style="display:flex; gap:8px;">
+        <button class="btn small" id="deleteGameYes" type="button">Oui, supprimer</button>
+        <button class="ghost small" id="deleteGameNo" type="button">Annuler</button>
+      </span>
+    </div>
     <div class="history-list" id="historyList"><p class="history-empty">Aucune partie enregistrée pour l'instant. Lance ta première partie !</p></div>
   </section>
 
