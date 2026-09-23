@@ -1,10 +1,27 @@
 "use strict";
 
-// Persistence layer. Uses the Claude Artifact `db` capability when the page
-// runs inside a published Artifact (real-time sync across devices); falls
-// back to an in-memory store for local viewing/testing outside that runtime.
+// Persistence layer. Uses Firestore (real-time sync across devices) when the
+// Firebase SDK loaded and initialized correctly; falls back to an in-memory
+// store for local viewing/testing (or if Firebase can't reach the network,
+// e.g. blocked by an ad blocker) so the app is still playable either way.
+var firebaseConfig = {
+  apiKey: "AIzaSyDNgyy35YI16BJOHpfBQeVvmQ9z_gmJE0Q",
+  authDomain: "triple-vingt.firebaseapp.com",
+  projectId: "triple-vingt",
+  storageBucket: "triple-vingt.firebasestorage.app",
+  messagingSenderId: "259127729867",
+  appId: "1:259127729867:web:31cce45c21b47b8d44c54e"
+};
 var db = null;
 var usingDb = false;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  usingDb = true;
+} catch (e) {
+  db = null;
+  usingDb = false;
+}
 var memGames = []; // fallback in-memory store
 var memIdSeq = 1;
 var memWatchId = null; // id currently watched via Store.watchGame, memory mode

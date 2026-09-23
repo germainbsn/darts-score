@@ -32,14 +32,21 @@ Aucun outil de build n'est nécessaire : c'est du HTML/CSS/JS pur. Le fichier
 
 ## À propos de la sauvegarde
 
-Le site a été conçu pour tourner dans un **Claude Artifact**, qui fournit une
-petite base de données partagée et synchronisée en temps réel entre tous les
-appareils (`window.claude.use('db')` dans `js/store.js`).
+L'app est hébergée sur GitHub Pages et sauvegarde les parties dans
+**Firestore** (projet Firebase `triple-vingt`, plan Spark gratuit) via
+`js/store.js`. Les règles Firestore autorisent la lecture/écriture libre sur
+la collection `games` — pas d'authentification, pensé pour un usage perso/
+entre amis plutôt qu'un déploiement public à grande échelle.
 
 - **Ouvert depuis ce dossier local** (double-clic sur `index.html`, ou via le
-  serveur d'IntelliJ), cette capacité n'existe pas : l'app le détecte
-  automatiquement et bascule en mode « sans sauvegarde » (état gardé en
-  mémoire le temps de la session, un bandeau orange le signale). Idéal pour
-  lire le code ou tester une partie rapidement.
-- **Sur la page publiée** (l'Artifact Claude), les parties et l'historique
-  sont sauvegardés et synchronisés entre tous les appareils qui l'ouvrent.
+  serveur d'IntelliJ), Firebase peut ne pas se charger (pas de réseau,
+  bloqueur de pub...) : l'app le détecte automatiquement et bascule en mode
+  « sans sauvegarde » (état gardé en mémoire le temps de la session, un
+  bandeau orange le signale). Idéal pour lire le code ou tester une partie
+  rapidement.
+- **Sur la page publiée** (GitHub Pages), les parties et l'historique sont
+  sauvegardés dans Firestore et synchronisés en temps réel entre tous les
+  appareils qui ouvrent la page.
+- La config Firebase (`firebaseConfig` dans `js/store.js`) n'est pas un
+  secret : elle identifie juste le projet côté client, la sécurité réelle
+  vient des règles Firestore, pas de la confidentialité de ces valeurs.

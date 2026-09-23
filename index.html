@@ -36,7 +36,7 @@
 <main>
   <section id="view-home" class="view">
     <div id="offlineNotice" class="notice" hidden>
-      Mode sans sauvegarde&nbsp;: la connexion au classeur n'a pas pu être établie. Cette partie restera jouable mais ne sera pas conservée ni synchronisée entre appareils.
+      Mode sans sauvegarde&nbsp;: la connexion au serveur n'a pas pu être établie. Cette partie restera jouable mais ne sera pas conservée ni synchronisée entre appareils.
     </div>
     <div id="activeBanner" class="active-banner" hidden>
       <span>Une partie est en cours&nbsp;: <strong id="activeBannerText"></strong></span>
@@ -422,6 +422,8 @@
   </section>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/dom.js"></script>
 <script src="js/state.js"></script>

@@ -1228,12 +1228,10 @@ function escapeHtml(s) {
 }
 
 // ---------- init ----------
-async function init() {
+// db/usingDb are already set by store.js at load time (Firebase init is
+// synchronous there), so this just reacts to what that came out to.
+function init() {
   setSoundEnabled(soundEnabled);
-  try {
-    db = await window.claude.use('db');
-  } catch (e) { db = null; }
-  usingDb = !!db;
   els.offlineNotice.hidden = usingDb;
 
   if (usingDb) {
@@ -1243,8 +1241,15 @@ async function init() {
       onPendingSnapshot(Object.assign({ id: d.id }, d.data()));
     }, function () { /* degrade silently */ });
 
-    db.collection('games').where('status', '==', 'finished').orderBy('finishedAt', 'desc').limit(500).onSnapshot(function (snap) {
-      onHistorySnapshot(snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }));
+    // No orderBy here on purpose: status==+orderBy is a composite query that
+    // Firestore needs a manually-created index for, which a fresh project
+    // doesn't have. A single-field equality filter needs no index, and 500
+    // finished games is nothing to sort client-side — same approach the
+    // memory fallback below already uses.
+    db.collection('games').where('status', '==', 'finished').limit(500).onSnapshot(function (snap) {
+      var list = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      list.sort(function (a, b) { return (b.finishedAt || 0) - (a.finishedAt || 0); });
+      onHistorySnapshot(list);
     }, function () { /* degrade silently */ });
   } else {
     renderPendingFromMemory();
