@@ -164,12 +164,15 @@ function renderX01(game) {
 
   els.x01Display.textContent = x01Input || '0';
   els.checkoutConfirm.hidden = true;
-  els.x01Submit.disabled = st.finished;
+  // Locked while the bot is mid-turn — it drives x01Darts/x01Input itself,
+  // programmatically, so this only ever blocks a stray human click.
+  var isBotTurn = botIndex(game) === st.currentPlayer;
+  els.x01Submit.disabled = st.finished || isBotTurn;
   Array.prototype.forEach.call(els.x01Pad.querySelectorAll('button'), function (b) {
     if (b === els.undoX01Btn) return;
-    b.disabled = st.finished;
+    b.disabled = st.finished || isBotTurn;
   });
-  els.undoX01Btn.disabled = (game.log || []).length === 0;
+  els.undoX01Btn.disabled = (game.log || []).length === 0 || isBotTurn;
 
   // dart-by-dart pad: rendered last so its own per-button disabling (bull has
   // no triple, at most 3 darts a turn) isn't clobbered by the blanket toggle above
@@ -184,13 +187,13 @@ function renderX01(game) {
   });
   var dartGridHtml = X01_DART_NUMS.map(function (num) {
     var isBull = num === 25;
-    var disabled = st.finished || (isBull && selectedMult === 3) || x01Darts.length >= 3;
+    var disabled = st.finished || isBotTurn || (isBull && selectedMult === 3) || x01Darts.length >= 3;
     return '<button type="button" class="x01-dart-btn" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + (isBull ? 'Bull' : num) + '</button>';
   }).join('');
   // miss/undo ride along in the same grid as the number buttons — right after
   // Bull — so they land on Bull's row instead of a separate full-width row.
-  var missDisabled = st.finished || x01Darts.length >= 3;
-  var undoDisabled = st.finished || x01Darts.length === 0;
+  var missDisabled = st.finished || isBotTurn || x01Darts.length >= 3;
+  var undoDisabled = st.finished || isBotTurn || x01Darts.length === 0;
   dartGridHtml += '<button type="button" class="x01-dart-btn x01-dart-miss" id="x01DartMissBtn" title="Raté" ' + (missDisabled ? 'disabled' : '') + '>✕</button>';
   dartGridHtml += '<button type="button" class="x01-dart-btn x01-dart-undo" id="x01DartUndoBtn" title="Dernière fléchette" ' + (undoDisabled ? 'disabled' : '') + '>⌫</button>';
   els.x01DartGrid.innerHTML = dartGridHtml;

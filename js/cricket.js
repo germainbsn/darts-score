@@ -73,8 +73,10 @@ function renderCricket(game) {
   html += '</tbody>';
   els.cricketTable.innerHTML = html;
 
-  // dart pad
-  var padDisabled = st.finished;
+  // dart pad — also locked while the bot is mid-turn, so a stray human click
+  // can't race the bot's own writes (it drives selectedMult/the log itself).
+  var isBotTurn = botIndex(game) === st.currentPlayer;
+  var padDisabled = st.finished || isBotTurn;
   var numHtml = CRICKET_NUMS.map(function (num) {
     var isBull = num === 25;
     var disabled = padDisabled || (isBull && selectedMult === 3);
@@ -82,10 +84,11 @@ function renderCricket(game) {
   }).join('');
   els.numGrid.innerHTML = numHtml;
   els.missBtn.disabled = padDisabled;
-  els.undoCricketBtn.disabled = (game.log || []).length === 0;
+  els.undoCricketBtn.disabled = (game.log || []).length === 0 || isBotTurn;
 
   Array.prototype.forEach.call(els.multChips.querySelectorAll('.chip'), function (c) {
     c.classList.toggle('active', parseInt(c.dataset.mult, 10) === selectedMult);
+    c.disabled = padDisabled;
   });
 
   els.cricketTurnLabel.textContent = st.finished ? 'Partie terminée' : (game.players[st.currentPlayer] + ' — fléchette ' + (st.dartInTurn + 1) + '/3');

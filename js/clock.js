@@ -63,15 +63,17 @@ function renderClock(game) {
   els.clockPlayers.innerHTML = html;
   focusCurrentPlayerCard(els.clockPlayers, game.id, st.currentPlayer, st.finished);
 
+  // Locked while the bot is mid-turn, same reasoning as Cricket's dart pad.
+  var isBotTurn = botIndex(game) === st.currentPlayer;
   var label = clockTargetLabel(clockTargetAt(game, st.hits[st.currentPlayer]), game);
   els.clockHitBtn.textContent = label;
   els.clockHitBtn.classList.toggle('tight', label.length > 3);
-  els.clockHitBtn.disabled = st.finished;
+  els.clockHitBtn.disabled = st.finished || isBotTurn;
   var dartsLeftInTurn = 3 - st.dartInTurn;
-  els.clockMissBtn.disabled = st.finished;
-  els.clockMiss2Btn.disabled = st.finished || dartsLeftInTurn < 2;
-  els.clockMiss3Btn.disabled = st.finished || dartsLeftInTurn < 3;
-  els.undoClockBtn.disabled = (game.log || []).length === 0;
+  els.clockMissBtn.disabled = st.finished || isBotTurn;
+  els.clockMiss2Btn.disabled = st.finished || isBotTurn || dartsLeftInTurn < 2;
+  els.clockMiss3Btn.disabled = st.finished || isBotTurn || dartsLeftInTurn < 3;
+  els.undoClockBtn.disabled = (game.log || []).length === 0 || isBotTurn;
 
   els.clockTurnLabel.textContent = st.finished
     ? 'Partie terminée'
