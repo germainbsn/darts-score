@@ -112,12 +112,22 @@ function simulateCricketBotTurn(marksForBot, closedByAllOthers, level) {
     }
     var num = CRICKET_NUMS[targetIdx];
     var isBull = num === 25;
-    var intendedMult = isBull ? 1 : (level >= 4 ? 3 : 1);
+    // Going for triples is a deliberate risk a player takes on more often as
+    // they improve — a smooth ramp (0% at level 1, 100% at level 10) instead
+    // of a hard cutoff, so MPR climbs gradually instead of jumping.
+    var tripleChance = (level - 1) / 9;
+    var intendedMult = isBull ? 1 : (Math.random() < tripleChance ? 3 : 1);
     var got = rollDart(num, intendedMult, level);
-    darts.push({ number: got.mult === 0 ? 0 : got.number, mult: got.mult });
-    if (got.mult > 0) {
-      var gi = CRICKET_NUMS.indexOf(got.number);
-      if (gi !== -1) marks[gi] = Math.min(3, marks[gi] + got.mult);
+    // A miss can drift to a neighbor that isn't even a Cricket number (e.g.
+    // aiming 20, landing on 1) — that's a wasted dart under Cricket's rules
+    // (only 15-20+Bull ever score), so it must log as a real miss, not as a
+    // "hit" on a number outside the set (which would silently go nowhere).
+    var gi = got.mult > 0 ? CRICKET_NUMS.indexOf(got.number) : -1;
+    if (gi === -1) {
+      darts.push({ number: 0, mult: 0 });
+    } else {
+      darts.push({ number: got.number, mult: got.mult });
+      marks[gi] = Math.min(3, marks[gi] + got.mult);
     }
   }
   return darts;
