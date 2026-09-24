@@ -9,6 +9,11 @@ function shuffleArray(arr) {
   return a;
 }
 function newMatchId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+// The bot always sits at the last player slot — only one bot per game, so no
+// need for a per-slot array. Returns -1 when the game has no bot.
+function botIndex(game) { return game.botLevel != null ? game.players.length - 1 : -1; }
+var botTurnRunning = false; // guards against a mid-turn re-render (each bot dart write fires the snapshot listener) kicking off a second, overlapping bot turn
 
 // ---------- tabs / navigation ----------
 var VIEWS_BY_TAB = { home: 'viewHome', history: 'viewHistory', stats: 'viewStats', ranking: 'viewRanking', play: 'viewPlay' };
@@ -55,6 +60,7 @@ els.soundToggle.addEventListener('click', function () {
 function watchGame(id) {
   if (activeGameUnsub) { activeGameUnsub(); activeGameUnsub = null; }
   activeGame = null;
+  botTurnRunning = false; // switching games invalidates any bot turn in flight for the previous one
   if (!id) return;
   activeGameUnsub = Store.watchGame(id, function (game) {
     activeGame = game;
@@ -73,6 +79,7 @@ var clockMultiplier = 'any';
 var clockOrderMode = 'sequential';
 var legsToWin = 1;
 var setsToWin = 1;
+var botLevel = null; // null = no bot; 1-10 otherwise — the bot always fills the LAST player slot
 var savedNames = [];
 try {
   var raw = localStorage.getItem('tv_lastPlayers');
@@ -88,9 +95,13 @@ function renderNameInputs() {
   }).join('');
   var existing = els.nameInputs.querySelectorAll('input');
   var html = '';
-  for (var i = 0; i < playerCount; i++) {
+  var humanCount = botLevel != null ? playerCount - 1 : playerCount;
+  for (var i = 0; i < humanCount; i++) {
     var val = (existing[i] ? existing[i].value : (savedNames[i] || '')).replace(/"/g, '&quot;');
     html += '<input type="text" list="playersDatalist" maxlength="18" placeholder="Joueur ' + (i + 1) + '" value="' + val + '">';
+  }
+  if (botLevel != null) {
+    html += '<div class="bot-name-slot">🤖 Bot niveau ' + botLevel + '</div>';
   }
   els.nameInputs.innerHTML = html;
 }
@@ -114,8 +125,22 @@ els.typeSeg.addEventListener('click', function (e) {
   els.clockMultiplierField.hidden = setupType !== 'clock';
   els.clockOrderField.hidden = setupType !== 'clock';
 });
-els.playerMinus.addEventListener('click', function () { if (playerCount > 1) { playClick(); playerCount--; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
+els.playerMinus.addEventListener('click', function () { if (playerCount > (botLevel != null ? 2 : 1)) { playClick(); playerCount--; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
 els.playerPlus.addEventListener('click', function () { if (playerCount < 4) { playClick(); playerCount++; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
+els.botCheck.addEventListener('click', function () {
+  playClick();
+  botLevel = els.botCheck.checked ? parseInt(els.botLevelSelect.value, 10) : null;
+  els.botLevelField.hidden = botLevel == null;
+  // A solo bot doesn't make sense — force at least one human opponent.
+  if (botLevel != null && playerCount < 2) { playerCount = 2; els.playerCount.textContent = playerCount; }
+  renderNameInputs();
+  updateMatchFieldsVisibility();
+});
+els.botLevelSelect.addEventListener('change', function () {
+  if (botLevel == null) return;
+  botLevel = parseInt(els.botLevelSelect.value, 10);
+  renderNameInputs();
+});
 els.legsMinus.addEventListener('click', function () { if (legsToWin > 1) { playClick(); legsToWin--; els.legsCount.textContent = legsToWin; } });
 els.legsPlus.addEventListener('click', function () { if (legsToWin < 9) { playClick(); legsToWin++; els.legsCount.textContent = legsToWin; } });
 els.setsMinus.addEventListener('click', function () { if (setsToWin > 1) { playClick(); setsToWin--; els.setsCount.textContent = setsToWin; } });
@@ -150,6 +175,7 @@ els.setupForm.addEventListener('submit', async function (e) {
   var inputs = Array.prototype.slice.call(els.nameInputs.querySelectorAll('input'));
   var names = inputs.map(function (inp, i) { return (inp.value.trim() || ('Joueur ' + (i + 1))); });
   try { localStorage.setItem('tv_lastPlayers', JSON.stringify(names)); } catch (err) { }
+  if (botLevel != null) names = names.concat(['Bot niveau ' + botLevel]);
 
   var isX01 = setupType === '301' || setupType === '501';
   // Random order: one shuffled sequence of all 21 targets (1-20 plus a 21st
@@ -172,6 +198,7 @@ els.setupForm.addEventListener('submit', async function (e) {
     matchId: isMatch ? newMatchId() : null,
     legsToWin: isMatch ? legsToWin : null,
     setsToWin: isMatch ? setsToWin : null,
+    botLevel: botLevel,
     players: names,
     log: [],
     status: 'in_progress',
@@ -298,6 +325,7 @@ els.playAgainBtn.addEventListener('click', async function () {
     matchId: continueMatch ? g.matchId : (g.matchId ? newMatchId() : null),
     legsToWin: g.matchId ? g.legsToWin : null,
     setsToWin: g.matchId ? g.setsToWin : null,
+    botLevel: g.botLevel != null ? g.botLevel : null,
     players: g.players,
     log: [],
     status: 'in_progress',
@@ -326,7 +354,9 @@ function computeTopBadgeText(game) {
   var filterType = statsFilterTypeForGame(game);
   if (!filterType) return null;
   var parts = [];
-  game.players.forEach(function (name) {
+  var bi = botIndex(game);
+  game.players.forEach(function (name, pi) {
+    if (pi === bi) return;
     var top = topGamesForPlayer(name, filterType);
     var idx = -1;
     for (var i = 0; i < Math.min(top.length, 5); i++) { if (top[i].id === game.id) { idx = i; break; } }
@@ -540,6 +570,87 @@ function renderPlay(game) {
   if (game.type === 'cricket') renderCricket(game);
   else if (game.type === 'clock') renderClock(game);
   else renderX01(game);
+  maybeStartBotTurn(game);
+}
+
+// ---------- bot opponent ----------
+// The bot always sits at the last player slot (botIndex). Its turn is driven
+// entirely client-side: bot.js decides the darts, this just plays them out
+// with a human-like pause between each and writes them through the exact
+// same functions a click would call (applyCricketDart, applyClockHit,
+// commitX01Turn, ...) — same sounds, same Firestore writes, same win
+// detection, nothing bot-specific in those files.
+function maybeStartBotTurn(game) {
+  if (!game || botTurnRunning) return;
+  if (game.status === 'finished' || game.status === 'abandoned') return;
+  var bi = botIndex(game);
+  if (bi < 0) return;
+  var st = game.type === 'cricket' ? computeCricketState(game)
+    : game.type === 'clock' ? computeClockState(game) : computeX01State(game);
+  if (st.finished || st.currentPlayer !== bi) return;
+  botTurnRunning = true;
+  runBotTurn(game, bi).catch(function (e) { console.error(e); }).then(function () { botTurnRunning = false; });
+}
+async function runBotTurn(game, bi) {
+  function stillHere() { return activeGame && activeGame.id === game.id; }
+  await sleep(500 + Math.random() * 300);
+  if (!stillHere()) return;
+
+  if (game.type === 'x01' || game.type === 'score') {
+    var st = computeX01State(activeGame);
+    var savedMode = x01EntryMode;
+    x01EntryMode = 'darts';
+    x01Darts = []; x01DartMult = []; x01Input = ''; // defensive: start this turn's dart slots clean
+    // Score mode counts UP with no target and no bust, so there's nothing to
+    // "have left" — pass a sentinel large enough that the checkout/avoid-1
+    // logic (gated on doubleOut anyway, always false for Score) never kicks in.
+    var remainingForSim = game.type === 'score' ? Infinity : st.totals[bi];
+    var darts = simulateX01BotTurn(remainingForSim, !!activeGame.doubleOut, activeGame.botLevel);
+    for (var i = 0; i < darts.length; i++) {
+      if (!stillHere()) { x01EntryMode = savedMode; return; }
+      x01Darts.push(darts[i].value);
+      x01DartMult.push(darts[i].mult);
+      x01Input = String(sumDarts(x01Darts));
+      renderX01(activeGame);
+      await sleep(600 + Math.random() * 400);
+    }
+    x01EntryMode = savedMode;
+    if (!stillHere()) return;
+    var total = sumDarts(x01Darts);
+    var lastDouble = darts.length > 0 && darts[darts.length - 1].isDouble;
+    await commitX01Turn(total, lastDouble);
+
+  } else if (game.type === 'cricket') {
+    var cst = computeCricketState(activeGame);
+    var n = activeGame.players.length;
+    var closedByAllOthers = function (idx) {
+      for (var pi = 0; pi < n; pi++) { if (pi !== bi && cst.marks[pi][idx] < 3) return false; }
+      return true;
+    };
+    var cDarts = simulateCricketBotTurn(cst.marks[bi], closedByAllOthers, activeGame.botLevel);
+    var savedMult = selectedMult;
+    for (var j = 0; j < cDarts.length; j++) {
+      if (!stillHere()) break;
+      if (computeCricketState(activeGame).finished) break;
+      if (cDarts[j].mult === 0) {
+        await applyCricketMiss();
+      } else {
+        selectedMult = cDarts[j].mult;
+        await applyCricketDart(cDarts[j].number);
+      }
+      await sleep(600 + Math.random() * 400);
+    }
+    selectedMult = savedMult;
+
+  } else { // clock
+    var kDarts = simulateClockBotTurn(activeGame, computeClockState(activeGame).hits[bi], activeGame.botLevel);
+    for (var k = 0; k < kDarts.length; k++) {
+      if (!stillHere()) break;
+      if (computeClockState(activeGame).finished) break;
+      if (kDarts[k].hit) { await applyClockHit(); } else { await applyClockMiss(1); }
+      await sleep(600 + Math.random() * 400);
+    }
+  }
 }
 
 // ---------- home banner + stats ----------
@@ -565,6 +676,7 @@ function renderStats() {
   var wins = {};
   historyGames.forEach(function (g) {
     if (g.winnerIndex == null || g.players.length < 2) return;
+    if (g.winnerIndex === botIndex(g)) return;
     var name = g.players[g.winnerIndex];
     wins[name] = (wins[name] || 0) + 1;
   });
@@ -633,7 +745,10 @@ els.deleteGameYes.addEventListener('click', async function () {
 // ---------- stats tab: player list + per-player detail ----------
 function uniquePlayerNames() {
   var seen = {};
-  historyGames.forEach(function (g) { g.players.forEach(function (n) { seen[n] = true; }); });
+  historyGames.forEach(function (g) {
+    var bi = botIndex(g);
+    g.players.forEach(function (n, pi) { if (pi !== bi) seen[n] = true; });
+  });
   return Object.keys(seen).sort(function (a, b) { return a.localeCompare(b, 'fr'); });
 }
 // Horloge now has a "touché requis" variant (Simple/Doubles/Triples) that

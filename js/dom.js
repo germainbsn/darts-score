@@ -8,6 +8,7 @@ var els = {};
   'mainTabs', 'offlineNotice', 'activeBanner', 'activeBannerText', 'resumeBtn',
   'homeAbandonBtn', 'homeAbandonConfirm', 'homeAbandonYes', 'homeAbandonNo',
   'setupForm', 'typeSeg', 'doubleOutField', 'doubleOutCheck', 'playerMinus', 'playerPlus', 'playerCount', 'nameInputs', 'playersDatalist',
+  'botCheck', 'botLevelField', 'botLevelSelect',
   'matchLegsField', 'legsMinus', 'legsPlus', 'legsCount', 'matchSetsField', 'setsMinus', 'setsPlus', 'setsCount',
   'statTiles', 'historyList', 'deleteGameConfirm', 'deleteGameConfirmText', 'deleteGameYes', 'deleteGameNo', 'backBtn', 'abandonBtn', 'abandonConfirm', 'abandonYes', 'abandonNo', 'playTitle', 'winnerBanner', 'topBadge', 'postGameActions', 'postGameUndoBtn', 'playAgainBtn',
   'gameChartCard', 'gameChartTitle', 'gameChartLegend', 'gameChartWrap', 'gameChartSvg', 'gameChartTooltip',
