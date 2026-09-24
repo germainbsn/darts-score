@@ -126,7 +126,7 @@ els.typeSeg.addEventListener('click', function (e) {
   els.clockOrderField.hidden = setupType !== 'clock';
 });
 els.playerMinus.addEventListener('click', function () { if (playerCount > (botLevel != null ? 2 : 1)) { playClick(); playerCount--; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
-els.playerPlus.addEventListener('click', function () { if (playerCount < 4) { playClick(); playerCount++; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
+els.playerPlus.addEventListener('click', function () { if (playerCount < 10) { playClick(); playerCount++; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
 els.botCheck.addEventListener('click', function () {
   playClick();
   botLevel = els.botCheck.checked ? parseInt(els.botLevelSelect.value, 10) : null;
@@ -436,7 +436,7 @@ function gameRoundSeries(game) {
   return { rounds: rounds, series: series, yLabel: GAME_CHART_YLABELS[game.type] };
 }
 
-var GAME_CHART_COLOR_VARS = ['--gold', '--chart-blue', '--red', '--chart-purple'];
+var GAME_CHART_COLOR_VARS = ['--gold', '--chart-blue', '--red', '--chart-purple', '--chart-teal', '--chart-pink', '--chart-orange', '--chart-slate'];
 function renderGameChart(game, finished) {
   if (!finished) { els.gameChartCard.hidden = true; return; }
   var data = gameRoundSeries(game);
