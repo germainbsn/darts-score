@@ -811,6 +811,36 @@ function clockFilterVariant(f) { return f === 'clock-double' ? 'double' : f === 
 function isX01Filter(f) { return f === '301' || f === '501' || f === '301-double' || f === '301-simple' || f === '501-double' || f === '501-simple'; }
 function x01FilterVariant(f) { return f.indexOf('301') === 0 ? 301 : 501; }
 function x01FilterDoubleOut(f) { return f.indexOf('-double') !== -1 ? true : f.indexOf('-simple') !== -1 ? false : null; }
+// "Checkout %" (le classique du fléchette) : sur tous les tours où le joueur
+// pouvait finir avant de lancer (le reste était atteignable compte tenu de
+// la règle double/simple sortie de cette partie), quelle proportion a
+// effectivement fini ce tour-là. Double sortie et sortie simple n'ont pas la
+// même définition de "atteignable" — d'où le split par filtre comme
+// avg3TrendData/statsForPlayer juste au-dessus.
+function x01InCheckoutRange(remaining, doubleOut) {
+  if (remaining < 1) return false;
+  if (doubleOut) return suggestCheckout(remaining, true, 3) != null;
+  return remaining <= 180; // no double required: any combo of 3 darts can clear up to T20 T20 T20
+}
+function x01CheckoutStats(name, filterType) {
+  var wantVariant = x01FilterVariant(filterType);
+  var wantDoubleOut = x01FilterDoubleOut(filterType);
+  var attempts = 0, hits = 0;
+  historyGames.forEach(function (g) {
+    if (g.type !== 'x01' || g.variant !== wantVariant) return;
+    if (wantDoubleOut !== null && !!g.doubleOut !== wantDoubleOut) return;
+    var pi = g.players.indexOf(name);
+    if (pi === -1) return;
+    computeX01State(g).entries.forEach(function (e) {
+      if (e.player !== pi) return;
+      var remainingBefore = e.bust ? e.totalAfter : (e.totalAfter + e.attempted);
+      if (!x01InCheckoutRange(remainingBefore, g.doubleOut)) return;
+      attempts++;
+      if (!e.bust && e.totalAfter === 0) hits++;
+    });
+  });
+  return { attempts: attempts, hits: hits, pct: attempts ? (hits / attempts * 100) : 0 };
+}
 function statsForPlayer(name, filterType) {
   var games = historyGames.filter(function (g) {
     if (g.players.indexOf(name) === -1) return false;
@@ -969,9 +999,18 @@ function renderStatsDetail() {
   } else {
     els.statsThirdTile.hidden = true;
   }
+  if (isX01Filter(statsFilterType)) {
+    var co = x01CheckoutStats(statsSelectedPlayer, statsFilterType);
+    els.statsFourthTile.hidden = false;
+    els.statsFourthValue.textContent = co.pct.toFixed(1) + '%';
+    els.statsFourthLabel.textContent = 'Fermeture (' + co.hits + '/' + co.attempts + ')';
+  } else {
+    els.statsFourthTile.hidden = true;
+  }
   renderStatsTopList();
   renderMprChart();
   renderAvg3Chart();
+  renderCheckoutChart();
   renderClockChart();
   renderClockNumberStats();
 }
@@ -1022,6 +1061,27 @@ function avg3TrendData(name, variant, period, doubleOut) {
   return Object.keys(buckets).sort().map(function (key) {
     var b = buckets[key];
     return { label: chartBucketLabel(key, period), value: b.turns ? (b.scored / b.turns) : 0, count: b.turns * 3 };
+  });
+}
+function checkoutTrendData(name, variant, period, doubleOut) {
+  var buckets = {};
+  historyGames.forEach(function (g) {
+    if (g.type !== 'x01' || g.variant !== variant || !g.finishedAt || g.players.indexOf(name) === -1) return;
+    if (doubleOut !== null && !!g.doubleOut !== doubleOut) return;
+    var pi = g.players.indexOf(name);
+    var key = chartBucketKey(g.finishedAt, period);
+    computeX01State(g).entries.forEach(function (e) {
+      if (e.player !== pi) return;
+      var remainingBefore = e.bust ? e.totalAfter : (e.totalAfter + e.attempted);
+      if (!x01InCheckoutRange(remainingBefore, g.doubleOut)) return;
+      if (!buckets[key]) buckets[key] = { attempts: 0, hits: 0 };
+      buckets[key].attempts++;
+      if (!e.bust && e.totalAfter === 0) buckets[key].hits++;
+    });
+  });
+  return Object.keys(buckets).sort().map(function (key) {
+    var b = buckets[key];
+    return { label: chartBucketLabel(key, period), value: b.attempts ? (b.hits / b.attempts * 100) : 0, count: b.attempts };
   });
 }
 
@@ -1137,6 +1197,24 @@ els.avg3PeriodSeg.addEventListener('click', function (e) {
   avg3ChartPeriod = b.dataset.period;
   Array.prototype.forEach.call(els.avg3PeriodSeg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
   renderAvg3Chart();
+});
+
+var checkoutChartPeriod = 'week';
+function renderCheckoutChart() {
+  var show = !!statsSelectedPlayer && isX01Filter(statsFilterType);
+  els.checkoutChartCard.hidden = !show;
+  if (!show) return;
+  var data = checkoutTrendData(statsSelectedPlayer, x01FilterVariant(statsFilterType), checkoutChartPeriod, x01FilterDoubleOut(statsFilterType));
+  renderTrendChart(data, { wrap: els.checkoutChartWrap, svg: els.checkoutChartSvg, tooltip: els.checkoutChartTooltip, empty: els.checkoutChartEmpty }, 'checkout', '%',
+    function (d) { return d.count + ' tentative' + (d.count > 1 ? 's' : ''); });
+}
+els.checkoutPeriodSeg.addEventListener('click', function (e) {
+  var b = e.target.closest('button');
+  if (!b) return;
+  playClick();
+  checkoutChartPeriod = b.dataset.period;
+  Array.prototype.forEach.call(els.checkoutPeriodSeg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
+  renderCheckoutChart();
 });
 
 // Horloge: fléchettes moyennes pour terminer, dans le temps — only the

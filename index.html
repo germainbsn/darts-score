@@ -221,6 +221,10 @@
           <div class="stat-total" id="statsThirdValue">0.0</div>
           <div class="stat-total-label" id="statsThirdLabel"></div>
         </div>
+        <div class="panel" id="statsFourthTile" hidden>
+          <div class="stat-total" id="statsFourthValue">0%</div>
+          <div class="stat-total-label" id="statsFourthLabel">Taux de fermeture</div>
+        </div>
       </div>
       <div class="chart-card" id="statsTopCard" hidden>
         <div class="chart-card-head">
@@ -257,6 +261,21 @@
           <div class="chart-tooltip" id="avg3ChartTooltip" hidden></div>
         </div>
         <p class="chart-empty" id="avg3ChartEmpty" hidden>Pas assez de parties pour tracer une courbe.</p>
+      </div>
+      <div class="chart-card" id="checkoutChartCard" hidden>
+        <div class="chart-card-head">
+          <h3>Taux de fermeture dans le temps</h3>
+          <div class="segmented small" id="checkoutPeriodSeg">
+            <button type="button" data-period="day">Jour</button>
+            <button type="button" data-period="week" class="active">Semaine</button>
+            <button type="button" data-period="month">Mois</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="checkoutChartWrap">
+          <svg id="checkoutChartSvg"></svg>
+          <div class="chart-tooltip" id="checkoutChartTooltip" hidden></div>
+        </div>
+        <p class="chart-empty" id="checkoutChartEmpty" hidden>Pas assez de tentatives de fermeture pour tracer une courbe.</p>
       </div>
       <div class="chart-card" id="clockChartCard" hidden>
         <div class="chart-card-head">
