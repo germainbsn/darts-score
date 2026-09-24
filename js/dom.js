@@ -4,6 +4,7 @@
 // the DOM is parsed (this script is loaded at the end of <body>).
 var els = {};
 [
+  'confettiLayer',
   'mainTabs', 'offlineNotice', 'activeBanner', 'activeBannerText', 'resumeBtn',
   'homeAbandonBtn', 'homeAbandonConfirm', 'homeAbandonYes', 'homeAbandonNo',
   'setupForm', 'typeSeg', 'doubleOutField', 'doubleOutCheck', 'playerMinus', 'playerPlus', 'playerCount', 'nameInputs', 'playersDatalist',

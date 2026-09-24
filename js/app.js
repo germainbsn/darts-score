@@ -11,6 +11,7 @@ function shuffleArray(arr) {
 function newMatchId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
 // ---------- tabs / navigation ----------
+var VIEWS_BY_TAB = { home: 'viewHome', history: 'viewHistory', stats: 'viewStats', ranking: 'viewRanking', play: 'viewPlay' };
 function setTab(tab) {
   currentTab = tab;
   els.viewHome.hidden = tab !== 'home';
@@ -21,6 +22,15 @@ function setTab(tab) {
   Array.prototype.forEach.call(els.mainTabs.querySelectorAll('.tab'), function (b) {
     b.classList.toggle('active', b.dataset.tab === tab && tab !== 'play');
   });
+  // Restart the fade/slide-in animation each time this view is (re)shown —
+  // removing the class then forcing a reflow before re-adding it is what
+  // makes a CSS animation replay on a class that never actually left the DOM.
+  var shownView = els[VIEWS_BY_TAB[tab]];
+  if (shownView) {
+    shownView.classList.remove('view-in');
+    void shownView.offsetWidth;
+    shownView.classList.add('view-in');
+  }
   if (tab === 'play' && activeGame) renderPlay(activeGame);
   if (tab === 'stats') showStatsList();
   if (tab === 'ranking') renderRanking();
@@ -210,6 +220,27 @@ function computeMatchStandings(game) {
 }
 
 // ---------- shared: winner banner, abandon, play shell ----------
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+var CONFETTI_COLORS = ['var(--red)', 'var(--green)', 'var(--gold)', 'var(--chart-blue)', 'var(--chart-purple)'];
+function spawnConfetti() {
+  if (!els.confettiLayer || prefersReducedMotion()) return;
+  var html = '';
+  for (var i = 0; i < 28; i++) {
+    var left = Math.random() * 100;
+    var delay = (Math.random() * 0.35).toFixed(2);
+    var duration = (2.2 + Math.random() * 1.1).toFixed(2);
+    var drift = (Math.random() * 80 - 40).toFixed(0);
+    var color = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    var spin = (360 + Math.random() * 360).toFixed(0);
+    html += '<span class="confetti-piece" style="left:' + left + '%; background:' + color
+      + '; animation-delay:' + delay + 's; animation-duration:' + duration + 's; --drift:' + drift + 'px; --spin:' + spin + 'deg;"></span>';
+  }
+  els.confettiLayer.innerHTML = html;
+  clearTimeout(spawnConfetti._clearTimer);
+  spawnConfetti._clearTimer = setTimeout(function () { els.confettiLayer.innerHTML = ''; }, 3800);
+}
 var lastWinSoundGameId = null; // avoid replaying the win jingle on every re-render of a finished game
 function renderWinner(game, finished, winnerIndex) {
   var standings = game.matchId ? computeMatchStandings(game) : null;
@@ -224,6 +255,10 @@ function renderWinner(game, finished, winnerIndex) {
     }
     if (lastWinSoundGameId !== game.id) {
       playWin();
+      spawnConfetti();
+      els.winnerBanner.classList.remove('banner-in');
+      void els.winnerBanner.offsetWidth;
+      els.winnerBanner.classList.add('banner-in');
       lastWinSoundGameId = game.id;
     }
   } else {
