@@ -5,14 +5,14 @@
   --ink:#2b241c;
   --ink-soft:#786c5c;
   --rule:#d8c8a8;
-  --red:#ad3327;
+  --red:#a8434a;
   --red-soft:#f2d9d4;
   --green:#2f6b4f;
   --green-soft:#d9e6de;
   --gold:#9c7a28;
   --gold-ink:#5f4a17;
   --gold-soft:#e9d9a8;
-  --danger:#ad3327;
+  --danger:#a8434a;
   --shadow:rgba(43,36,28,.14);
   --focus:#9c7a28;
   --chart-blue:#3b6ea5;
@@ -24,22 +24,22 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#26392f;
-    --surface:#304a3b;
-    --surface-2:#3a5946;
-    --ink:#f6f1e2;
-    --ink-soft:#c3ccbe;
-    --rule:#4f6b58;
-    --red:#ff7466;
-    --red-soft:#4d332c;
-    --green:#7ecda0;
-    --green-soft:#33513f;
-    --gold:#f0c96b;
-    --gold-ink:#fbecc0;
-    --gold-soft:#54451f;
-    --danger:#ff7466;
+    --bg:#1c2b23;
+    --surface:#20332a;
+    --surface-2:#243a30;
+    --ink:#f2ede2;
+    --ink-soft:#9fae9f;
+    --rule:#4a5f53;
+    --red:#d1636b;
+    --red-soft:#3a2220;
+    --green:#7fa88c;
+    --green-soft:#243830;
+    --gold:#c9a15a;
+    --gold-ink:#f5e6c8;
+    --gold-soft:#3d3116;
+    --danger:#d1636b;
     --shadow:rgba(0,0,0,.35);
-    --focus:#f0c96b;
+    --focus:#c9a15a;
     --chart-blue:#7fb0e6;
     --chart-purple:#c9a6f0;
     --chart-teal:#4fc9a8;
@@ -49,22 +49,22 @@
   }
 }
 :root[data-theme="dark"]{
-  --bg:#26392f;
-  --surface:#304a3b;
-  --surface-2:#3a5946;
-  --ink:#f6f1e2;
-  --ink-soft:#c3ccbe;
-  --rule:#4f6b58;
-  --red:#ff7466;
-  --red-soft:#4d332c;
-  --green:#7ecda0;
-  --green-soft:#33513f;
-  --gold:#f0c96b;
-  --gold-ink:#fbecc0;
-  --gold-soft:#54451f;
-  --danger:#ff7466;
+  --bg:#1c2b23;
+  --surface:#20332a;
+  --surface-2:#243a30;
+  --ink:#f2ede2;
+  --ink-soft:#9fae9f;
+  --rule:#4a5f53;
+  --red:#d1636b;
+  --red-soft:#3a2220;
+  --green:#7fa88c;
+  --green-soft:#243830;
+  --gold:#c9a15a;
+  --gold-ink:#f5e6c8;
+  --gold-soft:#3d3116;
+  --danger:#d1636b;
   --shadow:rgba(0,0,0,.35);
-  --focus:#f0c96b;
+  --focus:#c9a15a;
   --chart-blue:#7fb0e6;
   --chart-purple:#c9a6f0;
   --chart-teal:#4fc9a8;
@@ -88,10 +88,10 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--ink);
-  font-family:"Work Sans",system-ui,sans-serif;
+  font-family:"Karla",system-ui,sans-serif;
   padding:0 max(16px,env(safe-area-inset-left)) 48px max(16px,env(safe-area-inset-right));
 }
-h1,h2,h3{font-family:"Bebas Neue",system-ui,sans-serif; letter-spacing:.04em; text-wrap:balance; margin:0;}
+h1,h2,h3{font-family:"Fraunces",serif; font-weight:700; letter-spacing:.01em; text-wrap:balance; margin:0;}
 .mono{font-family:"Space Mono",monospace; font-variant-numeric:tabular-nums;}
 a{color:inherit;}
 button{font-family:inherit; transition:transform .1s ease;}
@@ -133,7 +133,7 @@ main{max-width:920px; margin:0 auto; padding-top:22px;}
   display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
   background:var(--surface-2); border:1px solid var(--rule); border-radius:12px; padding:14px 16px;
 }
-.active-banner strong{font-family:"Bebas Neue"; letter-spacing:.03em; font-size:1.1rem;}
+.active-banner strong{font-family:"Fraunces",serif; font-weight:700; letter-spacing:.01em; font-size:1.1rem;}
 
 .panels{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
 @media (max-width:720px){ .panels{grid-template-columns:1fr;} }
@@ -144,8 +144,8 @@ main{max-width:920px; margin:0 auto; padding-top:22px;}
 }
 .panel h2{font-size:1.5rem; margin-bottom:14px;}
 .panel-subhead{
-  font-family:"Bebas Neue"; font-size:.95rem; letter-spacing:.05em; text-transform:uppercase;
-  color:var(--ink-soft); margin:0 0 8px; font-weight:normal;
+  font-family:"Fraunces",serif; font-size:.95rem; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 8px; font-weight:600;
 }
 .panel-subhead:not(:first-of-type){margin-top:18px;}
 
@@ -202,12 +202,12 @@ main{max-width:920px; margin:0 auto; padding-top:22px;}
 .stat-row .stat-bar-fill{display:block; height:100%; background:var(--gold); border-radius:6px;}
 .stat-row .stat-val{font-family:"Space Mono"; font-size:.85rem; width:2.4em; text-align:right; flex:none;}
 .stat-empty{color:var(--ink-soft); font-size:.9rem;}
-.stat-total{font-family:"Space Mono"; font-size:2.2rem; margin-bottom:6px;}
+.stat-total{font-family:"Fraunces",serif; font-weight:700; font-size:2.2rem; margin-bottom:6px;}
 .stat-total-label{font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft);}
 
 .chart-card{background:var(--surface); border:1px solid var(--rule); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:14px;}
 .chart-card-head{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
-.chart-card-head h3{font-family:"Bebas Neue"; font-size:1.2rem; letter-spacing:.03em;}
+.chart-card-head h3{font-family:"Fraunces",serif; font-weight:700; font-size:1.2rem; letter-spacing:.01em;}
 .segmented.small{gap:6px;}
 .segmented.small button{padding:6px 10px; font-size:.76rem;}
 .chart-wrap{position:relative;}
@@ -242,7 +242,7 @@ main{max-width:920px; margin:0 auto; padding-top:22px;}
 
 button.history-item{width:100%; text-align:left; cursor:pointer; font:inherit; color:inherit;}
 button.history-item:hover{border-color:var(--gold);}
-.history-item .chev{color:var(--ink-soft); font-family:"Bebas Neue"; font-size:1.3rem;}
+.history-item .chev{color:var(--ink-soft); font-family:"Fraunces",serif; font-weight:700; font-size:1.3rem;}
 
 .history-item .hi-open{
   background:none; border:none; padding:0; margin:0; flex:1; min-width:0;
@@ -266,13 +266,13 @@ select{
 }
 
 .play-header{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
-.play-title{font-family:"Bebas Neue"; font-size:1.5rem; letter-spacing:.03em;}
+.play-title{font-family:"Fraunces",serif; font-weight:700; font-size:1.5rem; letter-spacing:.01em;}
 
 .board-scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:14px; background:var(--surface);}
 table.cricket-table{border-collapse:collapse; width:100%; min-width:360px;}
 table.cricket-table th, table.cricket-table td{padding:10px 8px; text-align:center; border-bottom:1px solid var(--rule);}
 table.cricket-table thead th{
-  font-family:"Bebas Neue"; letter-spacing:.03em; font-size:1rem; color:var(--ink-soft); border-bottom:2px solid var(--rule);
+  font-family:"Fraunces",serif; font-weight:700; letter-spacing:.01em; font-size:1rem; color:var(--ink-soft); border-bottom:2px solid var(--rule);
 }
 table.cricket-table thead th.cur-col{color:var(--ink);}
 table.cricket-table tbody th{text-align:left; padding-left:12px; white-space:nowrap;}
@@ -335,7 +335,7 @@ tr.stats-row th{text-align:left; padding-left:12px;}
   text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);
 }
 .x01-card .score-row{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
-.x01-card .remaining{font-family:"Space Mono"; font-size:2.1rem; font-weight:700; flex:none;}
+.x01-card .remaining{font-family:"Fraunces",serif; font-size:2.1rem; font-weight:700; flex:none;}
 .x01-card .remaining.tight{font-size:1.3rem;}
 .x01-card .sub{font-size:.72rem; color:var(--ink-soft); margin-top:6px;}
 .x01-card .stats{
@@ -394,7 +394,7 @@ tr.stats-row th{text-align:left; padding-left:12px;}
 
 .winner-banner{
   background:var(--green-soft); border:1.5px solid var(--green); color:var(--ink); border-radius:14px; padding:16px 18px;
-  font-family:"Bebas Neue"; font-size:1.4rem; letter-spacing:.03em; text-align:center;
+  font-family:"Fraunces",serif; font-weight:700; font-size:1.4rem; letter-spacing:.01em; text-align:center;
 }
 .top-badge{
   background:var(--gold-soft); border:1.5px solid var(--gold); color:var(--gold-ink); border-radius:12px; padding:10px 14px;
