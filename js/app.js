@@ -865,7 +865,7 @@ function statsForPlayer(name, filterType) {
   // to finish (Horloge, wins only — an unfinished attempt has no "darts to
   // finish") across every matched game, so the average is over real totals,
   // not an average of per-game averages
-  var totalDarts = 0, totalMarks = 0, totalTurns = 0, totalScored = 0, totalClockDarts = 0, clockFinishes = 0;
+  var totalDarts = 0, totalMarks = 0, totalX01Darts = 0, totalScored = 0, totalClockDarts = 0, clockFinishes = 0;
   games.forEach(function (g) {
     var pi = g.players.indexOf(name);
     if (g.type === 'cricket') {
@@ -879,12 +879,12 @@ function statsForPlayer(name, filterType) {
       }
     } else {
       var xs = x01DartStats(g)[pi];
-      totalTurns += xs.turns;
+      totalX01Darts += xs.darts;
       totalScored += xs.scored;
     }
   });
   var mpr = totalDarts ? (totalMarks / totalDarts * 3) : 0;
-  var avg3 = totalTurns ? (totalScored / totalTurns) : 0;
+  var avg3 = x01Avg3(totalScored, totalX01Darts);
   var avgClockDarts = clockFinishes ? (totalClockDarts / clockFinishes) : 0;
 
   return { played: games.length, playedMulti: multiGames.length, wins: wins, pct: pct, mpr: mpr, avg3: avg3, avgClockDarts: avgClockDarts };
@@ -932,7 +932,7 @@ function topGamesForPlayer(name, filterType) {
     }
     if (g.type === 'x01') {
       var xs = x01DartStats(g)[pi];
-      var avg = xs.turns ? (xs.scored / xs.turns) : 0;
+      var avg = x01Avg3(xs.scored, xs.darts);
       return { id: g.id, date: g.finishedAt, value: avg, display: avg.toFixed(1) + ' moy/3', sub: '' };
     }
     if (g.type === 'score') {
@@ -1054,13 +1054,13 @@ function avg3TrendData(name, variant, period, doubleOut) {
     var pi = g.players.indexOf(name);
     var xs = x01DartStats(g)[pi];
     var key = chartBucketKey(g.finishedAt, period);
-    if (!buckets[key]) buckets[key] = { turns: 0, scored: 0 };
-    buckets[key].turns += xs.turns;
+    if (!buckets[key]) buckets[key] = { darts: 0, scored: 0 };
+    buckets[key].darts += xs.darts;
     buckets[key].scored += xs.scored;
   });
   return Object.keys(buckets).sort().map(function (key) {
     var b = buckets[key];
-    return { label: chartBucketLabel(key, period), value: b.turns ? (b.scored / b.turns) : 0, count: b.turns * 3 };
+    return { label: chartBucketLabel(key, period), value: x01Avg3(b.scored, b.darts), count: b.darts };
   });
 }
 function checkoutTrendData(name, variant, period, doubleOut) {

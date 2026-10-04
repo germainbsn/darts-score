@@ -24,7 +24,7 @@ function computeX01State(game) {
       else if (game.doubleOut && newTotal === 0 && !t.confirmedDouble) bust = true;
     }
     if (!bust) { totals[p] = newTotal; }
-    entries.push({ player: p, attempted: t.attempted, bust: bust, totalAfter: bust ? totals[p] : newTotal });
+    entries.push({ player: p, attempted: t.attempted, darts: t.darts, bust: bust, totalAfter: bust ? totals[p] : newTotal });
   });
   var currentPlayer = log.length % n;
   var winnerIndex = null, finished;
@@ -89,18 +89,27 @@ function checkoutHintText(remaining, doubleOut, maxDarts) {
 
 // darts thrown & points scored (non-bust) per player — the basis for both
 // the card's compact stats line and the Stats tab's aggregate 3-dart average.
+// Every turn counts 3 darts, except a winning checkout entered dart by dart,
+// which records how many darts it actually took (`darts` on the log entry).
 // Works for Score too: bust is always false there, so `scored` is simply the
 // running total, and it's also how the Score high-score ranking reads a
 // finished game's final totals.
 function x01DartStats(game) {
   var st = computeX01State(game);
   var turns = game.players.map(function () { return 0; });
+  var darts = game.players.map(function () { return 0; });
   var scored = game.players.map(function () { return 0; });
   st.entries.forEach(function (e) {
     turns[e.player]++;
+    var checkout = game.type === 'x01' && !e.bust && e.totalAfter === 0;
+    darts[e.player] += (checkout && e.darts >= 1 && e.darts <= 3) ? e.darts : 3;
     if (!e.bust) scored[e.player] += e.attempted;
   });
-  return game.players.map(function (_, pi) { return { darts: turns[pi] * 3, turns: turns[pi], scored: scored[pi] }; });
+  return game.players.map(function (_, pi) { return { darts: darts[pi], turns: turns[pi], scored: scored[pi] }; });
+}
+// 3-dart average from x01DartStats-style totals: points per dart, times 3
+function x01Avg3(scored, darts) {
+  return darts ? (scored / darts * 3) : 0;
 }
 
 // value of one dart: a plain number*multiplier, or 25/50 for single/double bull
@@ -110,6 +119,11 @@ function dartValue(num, mult) {
   return num * mult;
 }
 function sumDarts(arr) { return arr.reduce(function (a, b) { return a + b; }, 0); }
+function dartReachesZero() {
+  if (!activeGame || activeGame.type !== 'x01') return false;
+  var st = computeX01State(activeGame);
+  return !st.finished && st.totals[st.currentPlayer] === sumDarts(x01Darts);
+}
 
 // ---------- rendering ----------
 function renderX01(game) {
@@ -125,8 +139,7 @@ function renderX01(game) {
   game.players.forEach(function (name, pi) {
     var lastEntry = null;
     st.entries.forEach(function (e) { if (e.player === pi) lastEntry = e; });
-    var turns = dstats[pi].turns;
-    var avg = turns ? (dstats[pi].scored / turns) : 0;
+    var avg = x01Avg3(dstats[pi].scored, dstats[pi].darts);
     var shown = st.totals[pi];
     if (pi === st.currentPlayer && pendingSum) { shown = isScoreMode ? shown + pendingSum : shown - pendingSum; }
     html += '<div class="x01-card ' + (pi === st.currentPlayer && !st.finished ? 'cur' : '') + '">'
@@ -226,7 +239,7 @@ async function submitX01Turn() {
     // Dart-by-dart mode already knows each dart's multiplier — the last one
     // thrown tells us straight away whether it was a double, no need to ask.
     // Total-entry mode only has the 3-dart sum, so that one still has to ask.
-    if (x01Darts.length === 3) {
+    if (x01Darts.length) {
       await commitX01Turn(attempted, x01DartMult[x01DartMult.length - 1] === 2);
       return;
     }
@@ -237,7 +250,11 @@ async function submitX01Turn() {
   await commitX01Turn(attempted, false);
 }
 async function commitX01Turn(attempted, confirmedDouble) {
-  var newLog = (activeGame.log || []).concat([{ player: computeX01State(activeGame).currentPlayer, attempted: attempted, confirmedDouble: !!confirmedDouble }]);
+  var turn = { player: computeX01State(activeGame).currentPlayer, attempted: attempted, confirmedDouble: !!confirmedDouble };
+  // dart-by-dart entry knows how many darts were thrown — matters for a
+  // checkout on the 1st or 2nd dart (see x01DartStats)
+  if (x01Darts.length) turn.darts = x01Darts.length;
+  var newLog = (activeGame.log || []).concat([turn]);
   var patched = Object.assign({}, activeGame, { log: newLog });
   var st = computeX01State(patched);
   var lastEntry = st.entries[st.entries.length - 1];
@@ -305,7 +322,9 @@ els.x01DartGrid.addEventListener('click', function (e) {
   x01Input = String(sumDarts(x01Darts));
   selectedMult = 1; // back to Simple after every dart — Double/Triple is a one-shot pick, not a sticky mode
   if (activeGame) renderX01(activeGame);
-  if (x01Darts.length === 3) submitX01Turn(); // 3rd dart: nothing left to enter, so validate the turn on its own
+  // 3rd dart: nothing left to enter, so validate the turn on its own — same
+  // as soon as a dart brings 301/501 to exactly 0 (game over, no dart left to throw)
+  if (x01Darts.length === 3 || dartReachesZero()) submitX01Turn();
 });
 
 els.x01Keypad.addEventListener('click', function (e) {
