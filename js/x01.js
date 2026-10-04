@@ -119,10 +119,14 @@ function dartValue(num, mult) {
   return num * mult;
 }
 function sumDarts(arr) { return arr.reduce(function (a, b) { return a + b; }, 0); }
-function dartReachesZero() {
+// true once the darts tapped so far end the turn early in 301/501: exactly 0
+// (game over), or a bust — past 0, or 1 left in double-out, where no dart can finish
+function dartEndsTurn() {
   if (!activeGame || activeGame.type !== 'x01') return false;
   var st = computeX01State(activeGame);
-  return !st.finished && st.totals[st.currentPlayer] === sumDarts(x01Darts);
+  if (st.finished) return false;
+  var left = st.totals[st.currentPlayer] - sumDarts(x01Darts);
+  return left <= 0 || (activeGame.doubleOut && left === 1);
 }
 
 // ---------- rendering ----------
@@ -323,8 +327,8 @@ els.x01DartGrid.addEventListener('click', function (e) {
   selectedMult = 1; // back to Simple after every dart — Double/Triple is a one-shot pick, not a sticky mode
   if (activeGame) renderX01(activeGame);
   // 3rd dart: nothing left to enter, so validate the turn on its own — same
-  // as soon as a dart brings 301/501 to exactly 0 (game over, no dart left to throw)
-  if (x01Darts.length === 3 || dartReachesZero()) submitX01Turn();
+  // as soon as a dart finishes the game or busts (see dartEndsTurn)
+  if (x01Darts.length === 3 || dartEndsTurn()) submitX01Turn();
 });
 
 els.x01Keypad.addEventListener('click', function (e) {
