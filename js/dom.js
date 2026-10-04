@@ -21,6 +21,7 @@ var els = {};
   'deletePlayerBtn', 'deletePlayerConfirm', 'deletePlayerConfirmText', 'deletePlayerYes', 'deletePlayerNo',
   'statsFilterType', 'statsGamesPlayed', 'statsWinPct', 'statsThirdTile', 'statsThirdLabel', 'statsThirdValue',
   'statsFourthTile', 'statsFourthLabel', 'statsFourthValue',
+  'statsMilestonesCard', 'statsFirst9', 'statsBestCheckout', 'stats180', 'stats140', 'stats100',
   'statsTopCard', 'statsTopTitle', 'statsTopList',
   'mprChartCard', 'mprPeriodSeg', 'mprChartWrap', 'mprChartSvg', 'mprChartTooltip', 'mprChartEmpty',
   'avg3ChartCard', 'avg3PeriodSeg', 'avg3ChartWrap', 'avg3ChartSvg', 'avg3ChartTooltip', 'avg3ChartEmpty',

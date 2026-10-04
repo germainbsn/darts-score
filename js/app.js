@@ -841,6 +841,34 @@ function x01CheckoutStats(name, filterType) {
   });
   return { attempts: attempts, hits: hits, pct: attempts ? (hits / attempts * 100) : 0 };
 }
+// Paliers et records 301/501, même filtre que x01CheckoutStats : nombre de
+// tours à 180 / 140-179 / 100-139 (tours ratés exclus — un raté marque 0),
+// meilleure finition, et moyenne sur les 9 premières fléchettes (les 3
+// premiers tours de chaque partie, là où le joueur score sans viser de sortie).
+function x01MilestoneStats(name, filterType) {
+  var wantVariant = x01FilterVariant(filterType);
+  var wantDoubleOut = x01FilterDoubleOut(filterType);
+  var r = { t180: 0, t140: 0, t100: 0, bestCheckout: 0, first9Scored: 0, first9Darts: 0 };
+  historyGames.forEach(function (g) {
+    if (g.type !== 'x01' || g.variant !== wantVariant) return;
+    if (wantDoubleOut !== null && !!g.doubleOut !== wantDoubleOut) return;
+    var pi = g.players.indexOf(name);
+    if (pi === -1) return;
+    var turnNo = 0;
+    computeX01State(g).entries.forEach(function (e) {
+      if (e.player !== pi) return;
+      turnNo++;
+      var pts = e.bust ? 0 : e.attempted;
+      if (pts === 180) r.t180++;
+      else if (pts >= 140) r.t140++;
+      else if (pts >= 100) r.t100++;
+      if (!e.bust && e.totalAfter === 0 && pts > r.bestCheckout) r.bestCheckout = pts;
+      if (turnNo <= 3) { r.first9Scored += pts; r.first9Darts += x01EntryDarts(g, e); }
+    });
+  });
+  r.first9Avg = x01Avg3(r.first9Scored, r.first9Darts);
+  return r;
+}
 function statsForPlayer(name, filterType) {
   var games = historyGames.filter(function (g) {
     if (g.players.indexOf(name) === -1) return false;
@@ -1004,8 +1032,16 @@ function renderStatsDetail() {
     els.statsFourthTile.hidden = false;
     els.statsFourthValue.textContent = co.pct.toFixed(1) + '%';
     els.statsFourthLabel.textContent = 'Fermeture (' + co.hits + '/' + co.attempts + ')';
+    var ms = x01MilestoneStats(statsSelectedPlayer, statsFilterType);
+    els.statsMilestonesCard.hidden = false;
+    els.statsFirst9.textContent = ms.first9Darts ? ms.first9Avg.toFixed(1) : '—';
+    els.statsBestCheckout.textContent = ms.bestCheckout || '—';
+    els.stats180.textContent = ms.t180;
+    els.stats140.textContent = ms.t140;
+    els.stats100.textContent = ms.t100;
   } else {
     els.statsFourthTile.hidden = true;
+    els.statsMilestonesCard.hidden = true;
   }
   renderStatsTopList();
   renderMprChart();

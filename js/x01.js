@@ -101,11 +101,16 @@ function x01DartStats(game) {
   var scored = game.players.map(function () { return 0; });
   st.entries.forEach(function (e) {
     turns[e.player]++;
-    var checkout = game.type === 'x01' && !e.bust && e.totalAfter === 0;
-    darts[e.player] += (checkout && e.darts >= 1 && e.darts <= 3) ? e.darts : 3;
+    darts[e.player] += x01EntryDarts(game, e);
     if (!e.bust) scored[e.player] += e.attempted;
   });
   return game.players.map(function (_, pi) { return { darts: darts[pi], turns: turns[pi], scored: scored[pi] }; });
+}
+// darts one computeX01State entry counts for: 3, or fewer for a winning
+// checkout entered dart by dart
+function x01EntryDarts(game, e) {
+  var checkout = game.type === 'x01' && !e.bust && e.totalAfter === 0;
+  return (checkout && e.darts >= 1 && e.darts <= 3) ? e.darts : 3;
 }
 // 3-dart average from x01DartStats-style totals: points per dart, times 3
 function x01Avg3(scored, darts) {
