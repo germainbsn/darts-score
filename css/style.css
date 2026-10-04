@@ -453,3 +453,23 @@ tr.stats-row th{text-align:left; padding-left:12px;}
   0%{transform:translate(0,0) rotate(0deg); opacity:.95;}
   100%{transform:translate(var(--drift), 105vh) rotate(var(--spin)); opacity:.2;}
 }
+
+/* ---------- Ma voix ---------- */
+#voiceBtn.active{border-color:var(--gold); background:var(--surface-2);}
+.voice-intro{margin:0; color:var(--ink-soft); line-height:1.5;}
+.voice-recorder{display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;}
+.voice-progress{font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft);}
+.voice-current{font-family:"Fraunces",serif; font-weight:700; font-size:4.5rem; line-height:1; transition:color .15s ease;}
+.voice-current.recording{color:var(--red);}
+.voice-controls{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+#voiceRecBtn{min-width:160px;}
+#voiceRecBtn.recording{background:var(--red); color:#fff; animation:voice-pulse 1s ease-in-out infinite;}
+@keyframes voice-pulse{50%{filter:brightness(1.25);}}
+@media (prefers-reduced-motion: reduce){ #voiceRecBtn.recording{animation:none;} }
+.voice-status{min-height:1.3em; font-size:.9rem; color:var(--ink-soft);}
+.voice-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(48px, 1fr)); gap:6px;}
+.voice-cell{padding:9px 0; border-radius:8px; border:1.5px solid var(--rule); background:var(--surface); color:var(--ink-soft); font-weight:600; font-size:.85rem; cursor:pointer; font-variant-numeric:tabular-nums;}
+.voice-cell.wide{grid-column:span 2;}
+.voice-cell.done{background:var(--green-soft); border-color:var(--green); color:var(--ink);}
+.voice-cell.cur{border-color:var(--gold); box-shadow:0 0 0 2px var(--gold);}
+.voice-cell:hover:not(.cur):not(:disabled){border-color:var(--gold);}

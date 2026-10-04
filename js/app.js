@@ -16,7 +16,7 @@ function botIndex(game) { return game.botLevel != null ? game.players.length - 1
 var botTurnRunning = false; // guards against a mid-turn re-render (each bot dart write fires the snapshot listener) kicking off a second, overlapping bot turn
 
 // ---------- tabs / navigation ----------
-var VIEWS_BY_TAB = { home: 'viewHome', history: 'viewHistory', stats: 'viewStats', ranking: 'viewRanking', play: 'viewPlay' };
+var VIEWS_BY_TAB = { home: 'viewHome', history: 'viewHistory', stats: 'viewStats', ranking: 'viewRanking', play: 'viewPlay', voice: 'viewVoice' };
 function setTab(tab) {
   currentTab = tab;
   els.viewHome.hidden = tab !== 'home';
@@ -24,6 +24,8 @@ function setTab(tab) {
   els.viewStats.hidden = tab !== 'stats';
   els.viewRanking.hidden = tab !== 'ranking';
   els.viewPlay.hidden = tab !== 'play';
+  els.viewVoice.hidden = tab !== 'voice';
+  els.voiceBtn.classList.toggle('active', tab === 'voice');
   Array.prototype.forEach.call(els.mainTabs.querySelectorAll('.tab'), function (b) {
     b.classList.toggle('active', b.dataset.tab === tab && tab !== 'play');
   });
@@ -40,6 +42,7 @@ function setTab(tab) {
   if (tab === 'stats') showStatsList();
   if (tab === 'ranking') renderRanking();
   if (tab === 'history') { els.deleteGameConfirm.hidden = true; pendingDeleteGameId = null; }
+  if (tab === 'voice') renderVoiceView(); else releaseVoiceMic();
 }
 els.mainTabs.addEventListener('click', function (e) {
   var b = e.target.closest('.tab');
@@ -48,6 +51,8 @@ els.mainTabs.addEventListener('click', function (e) {
   setTab(b.dataset.tab);
 });
 els.backBtn.addEventListener('click', function () { playClick(); setTab('home'); });
+els.voiceBtn.addEventListener('click', function () { playClick(); setTab('voice'); });
+els.voiceBackBtn.addEventListener('click', function () { playClick(); setTab('home'); });
 els.soundToggle.addEventListener('click', function () {
   setSoundEnabled(!soundEnabled);
   if (soundEnabled) playClick();

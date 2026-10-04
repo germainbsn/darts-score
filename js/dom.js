@@ -29,7 +29,8 @@ var els = {};
   'clockChartCard', 'clockChartPeriodSeg', 'clockChartWrap', 'clockChartSvg', 'clockChartTooltip', 'clockChartEmpty',
   'clockNumberStatsCard', 'clockNumberPeriodSeg', 'clockNumberSortSeg', 'clockNumberStatsList',
   'rankingStat', 'rankingList', 'rankingX01Field', 'rankingX01Filter', 'rankingRoundsField', 'rankingRoundsFilter', 'rankingClockField', 'rankingClockFilter',
-  'roundsField', 'roundsCount', 'roundsMinus', 'roundsPlus', 'soundToggle',
+  'roundsField', 'roundsCount', 'roundsMinus', 'roundsPlus', 'soundToggle', 'voiceBtn',
+  'voiceBackBtn', 'voiceProgress', 'voiceCurrent', 'voiceStatus', 'voiceRecBtn', 'voicePlayBtn', 'voicePrevBtn', 'voiceNextBtn', 'voiceDeleteBtn', 'voiceGrid',
   'clockFinishField', 'clockFinishSeg', 'clockMultiplierField', 'clockMultiplierSeg', 'clockOrderField', 'clockOrderSeg', 'clockBoard', 'clockPlayers', 'clockPad', 'clockHitBtn', 'clockMissBtn', 'clockMiss2Btn', 'clockMiss3Btn', 'undoClockBtn', 'clockTurnLabel', 'clockDartDots'
 ].forEach(function (id) {
   els[id] = document.getElementById(id);
@@ -39,6 +40,7 @@ els.viewHistory = document.getElementById('view-history');
 els.viewStats = document.getElementById('view-stats');
 els.viewRanking = document.getElementById('view-ranking');
 els.viewPlay = document.getElementById('view-play');
+els.viewVoice = document.getElementById('view-voice');
 
 // Scrolls the current player's card into the middle of a horizontally
 // scrolling .x01-players row — but only once per turn (tracked via a data

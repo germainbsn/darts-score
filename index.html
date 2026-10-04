@@ -31,6 +31,7 @@
       <button class="tab" data-tab="stats" type="button">Stats</button>
       <button class="tab" data-tab="ranking" type="button">Classement</button>
     </nav>
+    <button class="ghost small" id="voiceBtn" type="button" aria-label="Enregistrer ma voix" title="Ma voix">🎙</button>
     <button class="ghost small" id="soundToggle" type="button" aria-label="Couper le son">🔊</button>
   </div>
 </header>
@@ -380,6 +381,28 @@
     <div class="history-list" id="rankingList"><p class="history-empty">Aucune partie terminée pour l'instant.</p></div>
   </section>
 
+  <section id="view-voice" class="view" hidden>
+    <div class="play-header">
+      <button class="ghost" id="voiceBackBtn" type="button">← Accueil</button>
+      <h2>Ma voix</h2>
+      <span></span>
+    </div>
+    <p class="voice-intro">Enregistre chaque score pour qu'il soit annoncé avec ta voix en 301, 501 et Score. Les bots gardent la voix de synthèse, comme tout score pas encore enregistré.</p>
+    <div class="panel voice-recorder">
+      <div class="voice-progress" id="voiceProgress"></div>
+      <div class="voice-current" id="voiceCurrent"></div>
+      <div class="voice-controls">
+        <button class="ghost" id="voicePrevBtn" type="button" aria-label="Score précédent">←</button>
+        <button class="btn" id="voiceRecBtn" type="button">● Enregistrer</button>
+        <button class="ghost" id="voicePlayBtn" type="button">▶ Écouter</button>
+        <button class="ghost" id="voiceNextBtn" type="button" aria-label="Score suivant">→</button>
+      </div>
+      <div class="voice-status" id="voiceStatus" role="status"></div>
+      <button class="ghost small danger" id="voiceDeleteBtn" type="button">Supprimer cet enregistrement</button>
+    </div>
+    <div class="voice-grid" id="voiceGrid"></div>
+  </section>
+
   <section id="view-play" class="view" hidden>
     <div class="play-header">
       <button class="ghost" id="backBtn" type="button">← Accueil</button>
@@ -509,6 +532,7 @@
 <script src="js/x01.js"></script>
 <script src="js/clock.js"></script>
 <script src="js/bot.js"></script>
+<script src="js/voice.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

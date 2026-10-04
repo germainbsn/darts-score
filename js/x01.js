@@ -267,7 +267,8 @@ async function commitX01Turn(attempted, confirmedDouble) {
   var patched = Object.assign({}, activeGame, { log: newLog });
   var st = computeX01State(patched);
   var lastEntry = st.entries[st.entries.length - 1];
-  if (lastEntry.bust) { playMiss(); speak('Raté'); } else { playHit(); speak(String(attempted)); }
+  if (lastEntry.bust) playMiss(); else playHit();
+  announceScore(attempted, lastEntry.bust, botIndex(activeGame) === lastEntry.player);
   x01Input = '';
   x01Darts = [];
   x01DartMult = [];
