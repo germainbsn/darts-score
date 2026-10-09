@@ -10,9 +10,21 @@ function shuffleArray(arr) {
 }
 function newMatchId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-// The bot always sits at the last player slot — only one bot per game, so no
-// need for a per-slot array. Returns -1 when the game has no bot.
-function botIndex(game) { return game.botLevel != null ? game.players.length - 1 : -1; }
+// Only one bot per game, so a single slot index is enough. Games created
+// before the random start order have no botSlot — the bot was always last.
+// Returns -1 when the game has no bot.
+function botIndex(game) {
+  if (game.botLevel == null) return -1;
+  return game.botSlot != null ? game.botSlot : game.players.length - 1;
+}
+// Random start order: shuffles the players and tracks where the bot lands.
+function shufflePlayers(names, botSlot) {
+  var order = shuffleArray(names.map(function (_, i) { return i; }));
+  return {
+    players: order.map(function (i) { return names[i]; }),
+    botSlot: botSlot >= 0 ? order.indexOf(botSlot) : null
+  };
+}
 var botTurnRunning = false; // guards against a mid-turn re-render (each bot dart write fires the snapshot listener) kicking off a second, overlapping bot turn
 
 // ---------- tabs / navigation ----------
@@ -84,7 +96,7 @@ var clockMultiplier = 'any';
 var clockOrderMode = 'sequential';
 var legsToWin = 1;
 var setsToWin = 1;
-var botLevel = null; // null = no bot; 1-10 otherwise — the bot always fills the LAST player slot
+var botLevel = null; // null = no bot; 1-10 otherwise — the bot fills the last setup slot (the start order is shuffled at creation)
 var savedNames = [];
 try {
   var raw = localStorage.getItem('tv_lastPlayers');
@@ -181,6 +193,7 @@ els.setupForm.addEventListener('submit', async function (e) {
   var names = inputs.map(function (inp, i) { return (inp.value.trim() || ('Joueur ' + (i + 1))); });
   try { localStorage.setItem('tv_lastPlayers', JSON.stringify(names)); } catch (err) { }
   if (botLevel != null) names = names.concat(['Bot niveau ' + botLevel]);
+  var seating = shufflePlayers(names, botLevel != null ? names.length - 1 : -1);
 
   var isX01 = setupType === '301' || setupType === '501';
   // Random order: one shuffled sequence of all 21 targets (1-20 plus a 21st
@@ -204,7 +217,8 @@ els.setupForm.addEventListener('submit', async function (e) {
     legsToWin: isMatch ? legsToWin : null,
     setsToWin: isMatch ? setsToWin : null,
     botLevel: botLevel,
-    players: names,
+    botSlot: seating.botSlot,
+    players: seating.players,
     log: [],
     status: 'in_progress',
     createdAt: nowTs(),
@@ -316,6 +330,11 @@ els.playAgainBtn.addEventListener('click', async function () {
   var g = activeGame;
   var standings = g.matchId ? computeMatchStandings(g) : null;
   var continueMatch = standings && !standings.matchOver;
+  // "Manche suivante" must keep the same order: match standings are indexed
+  // by player slot across legs. "Rejouer" is a new game, so a new draw.
+  var seating = continueMatch
+    ? { players: g.players, botSlot: g.botLevel != null ? botIndex(g) : null }
+    : shufflePlayers(g.players, botIndex(g));
   var data = {
     type: g.type,
     variant: g.variant,
@@ -331,7 +350,8 @@ els.playAgainBtn.addEventListener('click', async function () {
     legsToWin: g.matchId ? g.legsToWin : null,
     setsToWin: g.matchId ? g.setsToWin : null,
     botLevel: g.botLevel != null ? g.botLevel : null,
-    players: g.players,
+    botSlot: seating.botSlot,
+    players: seating.players,
     log: [],
     status: 'in_progress',
     createdAt: nowTs(),
@@ -579,7 +599,7 @@ function renderPlay(game) {
 }
 
 // ---------- bot opponent ----------
-// The bot always sits at the last player slot (botIndex). Its turn is driven
+// The bot sits at botIndex(game). Its turn is driven
 // entirely client-side: bot.js decides the darts, this just plays them out
 // with a human-like pause between each and writes them through the exact
 // same functions a click would call (applyCricketDart, applyClockHit,
