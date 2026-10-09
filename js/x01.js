@@ -26,7 +26,7 @@ function computeX01State(game) {
     if (!bust) { totals[p] = newTotal; }
     entries.push({ player: p, attempted: t.attempted, darts: t.darts, bust: bust, totalAfter: bust ? totals[p] : newTotal });
   });
-  var currentPlayer = log.length % n;
+  var currentPlayer = ((game.startPlayer || 0) + log.length) % n;
   var winnerIndex = null, finished;
   if (isScore) {
     finished = log.length >= game.variant * n;

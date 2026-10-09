@@ -352,6 +352,9 @@ els.playAgainBtn.addEventListener('click', async function () {
     botLevel: g.botLevel != null ? g.botLevel : null,
     botSlot: seating.botSlot,
     players: seating.players,
+    // Slot of whoever throws first (absent = 0, i.e. games created before
+    // this field). Each "Manche suivante" hands the start to the next player.
+    startPlayer: continueMatch ? ((g.startPlayer || 0) + 1) % g.players.length : 0,
     log: [],
     status: 'in_progress',
     createdAt: nowTs(),

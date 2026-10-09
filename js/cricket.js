@@ -24,7 +24,7 @@ function computeCricketState(game) {
     }
   });
   var turnIndex = Math.floor(log.length / 3);
-  var currentPlayer = turnIndex % n;
+  var currentPlayer = ((game.startPlayer || 0) + turnIndex) % n;
   var dartInTurn = log.length % 3;
   var winnerIndex = null;
   for (var p = 0; p < n; p++) {

@@ -36,7 +36,7 @@ function computeClockState(game) {
     darts[t.player]++;
     if (t.hit) hits[t.player]++;
   });
-  var currentPlayer = Math.floor(log.length / 3) % n;
+  var currentPlayer = ((game.startPlayer || 0) + Math.floor(log.length / 3)) % n;
   var dartInTurn = log.length % 3;
   var winnerIndex = null;
   for (var p = 0; p < n; p++) { if (hits[p] >= 21) { winnerIndex = p; break; } }
