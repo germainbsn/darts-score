@@ -453,6 +453,10 @@
     <div id="cricketBoard" hidden>
       <div class="board-scroll"><table class="cricket-table" id="cricketTable"></table></div>
       <div class="dart-pad" id="dartPad">
+        <div class="turn-status turn-banner">
+          <span id="cricketTurnLabel"></span>
+          <span class="dart-dots" id="dartDots"></span>
+        </div>
         <div class="mult-chips" id="multChips">
           <button type="button" class="chip active" data-mult="1">Simple</button>
           <button type="button" class="chip" data-mult="2">Double</button>
@@ -465,10 +469,6 @@
         </div>
         <div class="pad-actions">
           <button class="ghost" id="undoCricketBtn" type="button">Annuler la dernière fléchette</button>
-        </div>
-        <div class="turn-status">
-          <span id="cricketTurnLabel"></span>
-          <span class="dart-dots" id="dartDots"></span>
         </div>
       </div>
     </div>

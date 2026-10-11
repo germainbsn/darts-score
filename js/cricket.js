@@ -50,13 +50,12 @@ function renderCricket(game) {
   els.dartPad.hidden = st.finished;
   var html = '<thead><tr><th>Cible</th>';
   game.players.forEach(function (name, i) {
-    html += '<th class="' + (i === st.currentPlayer && !st.finished ? 'cur-col' : '') + '">' + escapeHtml(name) + '</th>';
+    var isCur = i === st.currentPlayer && !st.finished;
+    html += '<th class="' + (isCur ? 'cur-col' : '') + '">' + (isCur ? '🎯 ' : '') + escapeHtml(name) + '</th>';
   });
   html += '</tr></thead><tbody>';
   CRICKET_NUMS.forEach(function (num, idx) {
-    var colorClass = idx % 2 === 0 ? 'c-red' : 'c-green';
-    if (num === 25) colorClass = 'c-red';
-    html += '<tr><th><span class="num-chip ' + colorClass + '">' + CRICKET_LABELS[num] + '</span></th>';
+    html += '<tr><th><span class="num-chip' + (num === 25 ? ' bull' : '') + '">' + CRICKET_LABELS[num] + '</span></th>';
     game.players.forEach(function (name, pi) {
       var m = st.marks[pi][idx];
       var cls = 'mark-cell' + (m >= 3 ? ' closed' : '') + (pi === st.currentPlayer && !st.finished ? ' cur' : '');
@@ -66,7 +65,8 @@ function renderCricket(game) {
   });
   html += '<tr class="score-row"><th>Score</th>';
   game.players.forEach(function (name, pi) {
-    html += '<td class="' + (st.winnerIndex === pi ? 'winner' : '') + '">' + st.scores[pi] + '</td>';
+    var scoreCls = (st.winnerIndex === pi ? 'winner' : '') + (pi === st.currentPlayer && !st.finished ? ' cur' : '');
+    html += '<td class="' + scoreCls + '">' + st.scores[pi] + '</td>';
   });
   html += '</tr>';
   html += statsRowHtml(game);
@@ -80,7 +80,7 @@ function renderCricket(game) {
   var numHtml = CRICKET_NUMS.map(function (num) {
     var isBull = num === 25;
     var disabled = padDisabled || (isBull && selectedMult === 3);
-    return '<button type="button" class="num-btn" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + CRICKET_LABELS[num] + '</button>';
+    return '<button type="button" class="num-btn' + (isBull ? ' bull' : '') + '" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + CRICKET_LABELS[num] + '</button>';
   }).join('');
   els.numGrid.innerHTML = numHtml;
   els.missBtn.disabled = padDisabled;
@@ -92,7 +92,8 @@ function renderCricket(game) {
     c.disabled = padDisabled;
   });
 
-  els.cricketTurnLabel.textContent = st.finished ? 'Partie terminée' : (game.players[st.currentPlayer] + ' — fléchette ' + (st.dartInTurn + 1) + '/3');
+  els.cricketTurnLabel.innerHTML = st.finished ? 'Partie terminée'
+    : 'À <strong>' + escapeHtml(game.players[st.currentPlayer]) + '</strong> de jouer <span class="turn-dart">fléchette ' + (st.dartInTurn + 1) + '/3</span>';
   var dots = '';
   for (var d = 0; d < 3; d++) { dots += '<span class="dart-dot' + (d < st.dartInTurn ? ' filled' : '') + '"></span>'; }
   els.dartDots.innerHTML = dots;
@@ -187,8 +188,16 @@ els.multChips.addEventListener('click', function (e) {
 els.numGrid.addEventListener('click', function (e) {
   var b = e.target.closest('.num-btn');
   if (!b || b.disabled) return;
-  applyCricketDart(parseInt(b.dataset.num, 10));
+  applyCricketDart(parseInt(b.dataset.num, 10)); // reads selectedMult before its first await
+  resetCricketMult();
 });
-els.missBtn.addEventListener('click', function () { applyCricketMiss(); });
-els.missTurnBtn.addEventListener('click', function () { applyCricketMiss('turn'); });
+// Double/Triple only applies to the next dart, then the pad falls back to
+// Simple. Only the human handlers call this — the bot drives selectedMult itself.
+function resetCricketMult() {
+  if (selectedMult === 1) return;
+  selectedMult = 1;
+  if (activeGame && activeGame.type === 'cricket') renderCricket(activeGame);
+}
+els.missBtn.addEventListener('click', function () { applyCricketMiss(); resetCricketMult(); });
+els.missTurnBtn.addEventListener('click', function () { applyCricketMiss('turn'); resetCricketMult(); });
 els.undoCricketBtn.addEventListener('click', undoCricket);

@@ -297,14 +297,15 @@ table.cricket-table th, table.cricket-table td{padding:10px 8px; text-align:cent
 table.cricket-table thead th{
   font-family:"Fraunces",serif; font-weight:700; letter-spacing:.01em; font-size:1rem; color:var(--ink-soft); border-bottom:2px solid var(--rule);
 }
-table.cricket-table thead th.cur-col{color:var(--ink);}
+table.cricket-table thead th.cur-col{color:var(--gold-ink); background:var(--gold-soft); box-shadow:inset 0 3px 0 var(--gold), inset 2px 0 0 var(--gold), inset -2px 0 0 var(--gold);}
+table.cricket-table td.cur{box-shadow:inset 2px 0 0 var(--gold), inset -2px 0 0 var(--gold);}
+tr.score-row td.cur{background:var(--gold-soft); box-shadow:inset 2px 0 0 var(--gold), inset -2px 0 0 var(--gold), inset 0 -3px 0 var(--gold);}
 table.cricket-table tbody th{text-align:left; padding-left:12px; white-space:nowrap;}
 .num-chip{
-  display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%;
-  font-family:"Space Mono"; font-weight:700; font-size:.85rem; color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; min-width:38px; height:30px; padding:0 8px; border-radius:8px;
+  font-family:"Space Mono"; font-weight:700; font-size:.95rem; color:var(--ink); background:var(--surface-2); border:1px solid var(--rule);
 }
-.num-chip.c-red{background:var(--red);}
-.num-chip.c-green{background:var(--green);}
+.num-chip.bull{font-size:.8rem;}
 td.mark-cell{position:relative;}
 td.mark-cell.cur{background:var(--gold-soft);}
 .mark{width:26px; height:26px; margin:0 auto; display:block; stroke:var(--ink-soft); stroke-width:2.4; stroke-linecap:round; fill:none;}
@@ -324,8 +325,7 @@ tr.stats-row th{text-align:left; padding-left:12px;}
 .chip{flex:1; padding:9px; border-radius:8px; border:1.5px solid var(--rule); background:var(--surface-2); font-weight:700; cursor:pointer; color:var(--ink); transition:border-color .15s ease, background-color .15s ease, color .15s ease;}
 .chip:hover:not(.active){border-color:var(--gold);}
 .chip.active{background:var(--red); border-color:var(--red); color:#fff;}
-.num-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
-@media (min-width:520px){ .num-grid{grid-template-columns:repeat(7,1fr);} }
+.num-grid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px;}
 .num-btn{
   padding:14px 0; border-radius:10px; border:1.5px solid var(--rule); background:var(--surface-2);
   font-family:"Space Mono"; font-weight:700; font-size:1.25rem; cursor:pointer; color:var(--ink);
@@ -333,10 +333,20 @@ tr.stats-row th{text-align:left; padding-left:12px;}
 }
 .num-btn:hover:not(:disabled){border-color:var(--gold); background:var(--gold-soft);}
 .num-btn:disabled{opacity:.35; cursor:not-allowed;}
+@media (max-width:519px){
+  .dart-pad{padding:12px 10px;}
+  .num-grid{gap:4px;}
+  .num-btn{padding:14px 0; font-size:1.05rem;}
+  .num-btn.bull{font-size:.75rem; letter-spacing:-.03em;}
+}
 .pad-actions{display:flex; gap:10px;}
 .miss-row{display:flex; gap:8px;}
 .miss-btn{flex:1; padding:14px 0; font-size:1.15rem; font-weight:700; letter-spacing:.03em;}
 .turn-status{font-size:.9rem; color:var(--ink-soft); display:flex; align-items:center; gap:10px;}
+.turn-banner{justify-content:space-between; font-size:1.15rem; color:var(--ink); background:var(--gold-soft); border:1.5px solid var(--gold); border-radius:10px; padding:10px 14px;}
+.turn-banner strong{color:var(--gold-ink); font-family:"Fraunces",serif;}
+.turn-banner .turn-dart{display:block; font-size:.75rem; color:var(--ink-soft);}
+.turn-banner .dart-dot{width:12px; height:12px;}
 .dart-dots{display:flex; gap:5px;}
 .dart-dot{width:9px; height:9px; border-radius:50%; background:var(--rule);}
 .dart-dot.filled{background:var(--red);}
