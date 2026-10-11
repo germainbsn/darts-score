@@ -1707,4 +1707,30 @@ function init() {
   }
 }
 
+// ---------- update check ----------
+// GitHub Pages lets browsers cache index.html for 10 minutes, so after a
+// deploy a phone can keep running the old app. On load and whenever the tab
+// comes back to the foreground, refetch this very page URL past the cache
+// (same cache entry as the document: /darts-score/ and /index.html are
+// cached separately) and compare its app-version. If it changed, that
+// cache: 'reload' fetch has just stored the new page, so a plain reload
+// picks it up, and css/js follow thanks to their ?v=. sessionStorage guards
+// against a reload loop if a stale copy still comes back. Skipped mid bot
+// turn so a turn is never cut in half.
+var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
+function checkForUpdate() {
+  if (!APP_VERSION || botTurnRunning || location.protocol === 'file:') return;
+  fetch(location.href.split('#')[0], { cache: 'reload' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (html) {
+    var m = html.match(/<meta name="app-version" content="([^"]+)"/);
+    if (!m || m[1] === APP_VERSION) return;
+    var tried = null;
+    try { tried = sessionStorage.getItem('tv_reloadedFor'); } catch (e) { }
+    if (tried === m[1]) return;
+    try { sessionStorage.setItem('tv_reloadedFor', m[1]); } catch (e) { }
+    location.reload();
+  }).catch(function () { /* offline: keep running what we have */ });
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') checkForUpdate(); });
+
 init();
+checkForUpdate();
