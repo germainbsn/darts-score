@@ -237,6 +237,17 @@ els.resumeBtn.addEventListener('click', function () {
 });
 
 // ---------- match play: best-of-N legs per set, best-of-N sets ----------
+// Every finished leg of game's match, oldest first (activeGame included
+// even before the history snapshot catches up with it).
+function matchLegs(game) {
+  var legs = historyGames.filter(function (g) { return g.matchId === game.matchId && g.status === 'finished' && g.winnerIndex != null; });
+  if (activeGame && activeGame.matchId === game.matchId && activeGame.status === 'finished' && activeGame.winnerIndex != null
+    && !legs.some(function (g) { return g.id === activeGame.id; })) {
+    legs = legs.concat([activeGame]);
+  }
+  legs.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+  return legs;
+}
 // A "leg" is one ordinary game document; several legs sharing a matchId form
 // a match. Standings are derived, not stored — replay every finished leg of
 // this matchId in play order, crediting a set once a player's leg count
@@ -244,12 +255,7 @@ els.resumeBtn.addEventListener('click', function () {
 // reaches setsToWin.
 function computeMatchStandings(game) {
   if (!game.matchId) return null;
-  var legs = historyGames.filter(function (g) { return g.matchId === game.matchId && g.status === 'finished' && g.winnerIndex != null; });
-  if (activeGame && activeGame.matchId === game.matchId && activeGame.status === 'finished' && activeGame.winnerIndex != null
-    && !legs.some(function (g) { return g.id === activeGame.id; })) {
-    legs = legs.concat([activeGame]);
-  }
-  legs.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+  var legs = matchLegs(game);
   var n = game.players.length;
   var setsWon = game.players.map(function () { return 0; });
   var legsWon = game.players.map(function () { return 0; });
@@ -314,8 +320,60 @@ function renderWinner(game, finished, winnerIndex) {
   if (finished) {
     els.playAgainBtn.textContent = (standings && !standings.matchOver) ? 'Manche suivante' : 'Rejouer';
   }
+  renderMatchRecap(game, finished);
   renderGameChart(game, finished);
   renderTopBadge(game);
+}
+// One row per leg played so far in this match, one column per player: the
+// leg's key figure for that player, the winner's cell highlighted, plus a
+// totals row (legs won, and the 3-dart average over the whole match in x01).
+function matchLegCell(leg, pi) {
+  if (leg.type === 'x01' || leg.type === 'score') {
+    var st = computeX01State(leg);
+    if (leg.type === 'score') return { main: String(st.totals[pi]), sub: 'pts' };
+    var xs = x01DartStats(leg)[pi];
+    return { main: x01Avg3(xs.scored, xs.darts).toFixed(1), sub: pi === leg.winnerIndex ? xs.darts + ' fl.' : 'reste ' + st.totals[pi] };
+  }
+  if (leg.type === 'cricket') {
+    var cst = computeCricketState(leg), cs = cricketDartStats(leg)[pi];
+    return { main: String(cst.scores[pi]), sub: 'MPR ' + (cs.darts ? (cs.marks / cs.darts * 3) : 0).toFixed(2) };
+  }
+  var kst = computeClockState(leg);
+  return { main: Math.min(kst.hits[pi], 21) + '/21', sub: kst.darts[pi] + ' fl.' };
+}
+function renderMatchRecap(game, finished) {
+  var legs = (finished && game.matchId) ? matchLegs(game) : [];
+  if (!legs.length) { els.matchRecapCard.hidden = true; return; }
+  els.matchRecapCard.hidden = false;
+  var mainLabel = { x01: 'moyenne 3 fl.', score: 'points', cricket: 'points', clock: 'cibles' }[game.type];
+  els.matchRecapHint.textContent = 'Par manche : ' + mainLabel;
+  var head = '<thead><tr><th>Manche</th>' + game.players.map(function (name) { return '<th>' + escapeHtml(name) + '</th>'; }).join('') + '</tr></thead>';
+  var legsWon = game.players.map(function () { return 0; });
+  var setNo = 1, legInSet = 0, setLegsWon = game.players.map(function () { return 0; });
+  var showSets = game.setsToWin > 1;
+  var rows = legs.map(function (leg, li) {
+    legInSet++;
+    var label = showSets ? 'S' + setNo + ' · M' + legInSet : 'M' + (li + 1);
+    var cells = game.players.map(function (_, pi) {
+      var c = matchLegCell(leg, pi), won = pi === leg.winnerIndex;
+      return '<td class="' + (won ? 'won' : '') + '"><span class="mono recap-main">' + (won ? '🏆 ' : '') + c.main + '</span><span class="recap-sub">' + c.sub + '</span></td>';
+    }).join('');
+    legsWon[leg.winnerIndex]++;
+    setLegsWon[leg.winnerIndex]++;
+    var endsSet = setLegsWon[leg.winnerIndex] >= game.legsToWin;
+    if (endsSet) { setNo++; legInSet = 0; setLegsWon = game.players.map(function () { return 0; }); }
+    return '<tr class="' + (showSets && endsSet ? 'set-end' : '') + '"><th>' + label + '</th>' + cells + '</tr>';
+  }).join('');
+  var totalCells = game.players.map(function (_, pi) {
+    var sub = legsWon[pi] > 1 ? ' manches' : ' manche';
+    if (game.type === 'x01') {
+      var scored = 0, darts = 0;
+      legs.forEach(function (leg) { var xs = x01DartStats(leg)[pi]; scored += xs.scored; darts += xs.darts; });
+      return '<td><span class="mono recap-main">' + legsWon[pi] + sub + '</span><span class="recap-sub">moy. ' + x01Avg3(scored, darts).toFixed(1) + '</span></td>';
+    }
+    return '<td><span class="mono recap-main">' + legsWon[pi] + sub + '</span></td>';
+  }).join('');
+  els.matchRecapTable.innerHTML = head + '<tbody>' + rows + '</tbody><tfoot><tr><th>Total</th>' + totalCells + '</tr></tfoot>';
 }
 function undoActiveGame() {
   if (!activeGame) return;

@@ -272,6 +272,16 @@ select{
 .play-title{font-family:"Fraunces",serif; font-weight:700; font-size:1.5rem; letter-spacing:.01em;}
 
 .board-scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:14px; background:var(--surface);}
+table.recap-table{border-collapse:collapse; width:100%;}
+table.recap-table th, table.recap-table td{padding:9px 8px; text-align:center; border-bottom:1px solid var(--rule); vertical-align:middle;}
+table.recap-table thead th{font-family:"Fraunces",serif; font-weight:700; color:var(--ink-soft); border-bottom:2px solid var(--rule); white-space:nowrap;}
+table.recap-table tbody th, table.recap-table tfoot th{text-align:left; padding-left:12px; white-space:nowrap; color:var(--ink-soft); font-weight:600; font-size:.85rem;}
+table.recap-table tr.set-end td, table.recap-table tr.set-end th{border-bottom:2px solid var(--rule);}
+table.recap-table td.won{background:var(--gold-soft);}
+table.recap-table tfoot td, table.recap-table tfoot th{border-bottom:none; border-top:2px solid var(--rule);}
+.recap-main{display:block; font-weight:700;}
+.recap-sub{display:block; font-size:.75rem; color:var(--ink-soft);}
+.recap-hint{font-size:.8rem; color:var(--ink-soft);}
 table.cricket-table{border-collapse:collapse; width:100%; min-width:360px;}
 table.cricket-table th, table.cricket-table td{padding:10px 8px; text-align:center; border-bottom:1px solid var(--rule);}
 table.cricket-table thead th{
