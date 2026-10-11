@@ -191,19 +191,13 @@ main{max-width:920px; margin:0 auto; padding-top:22px;}
 }
 .active-banner strong{font-family:"Fraunces",serif; font-weight:700; letter-spacing:.01em; font-size:1.1rem;}
 
-.panels{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:20px;}
-@media (max-width:720px){ .panels{grid-template-columns:minmax(0,1fr);} }
+.panels{width:100%; max-width:640px; margin:0 auto;}
 
 .panel{
   background:var(--surface); border:1px solid var(--rule); border-radius:16px; padding:20px;
   box-shadow:0 1px 3px var(--shadow);
 }
 .panel h2{font-size:1.5rem; margin-bottom:14px;}
-.panel-subhead{
-  font-family:"Fraunces",serif; font-size:.95rem; letter-spacing:.05em; text-transform:uppercase;
-  color:var(--ink-soft); margin:0 0 8px; font-weight:600;
-}
-.panel-subhead:not(:first-of-type){margin-top:18px;}
 
 .field{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
 .field label{font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); font-weight:600;}

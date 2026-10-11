@@ -901,73 +901,6 @@ function gameTypeLabel(g) {
     : g.type === 'clock' ? ('Horloge · finir sur ' + finishLabel(g.finishMode))
     : (g.variant + (g.doubleOut ? ' · double sortie' : ''));
 }
-// Coarse, human "how long ago" — the home widget is about what just
-// happened, not an exact timestamp (Historique still shows the full date).
-function timeAgo(ts) {
-  if (!ts) return '';
-  var diffMin = Math.round((Date.now() - ts) / 60000);
-  if (diffMin < 1) return 'à l\'instant';
-  if (diffMin < 60) return 'il y a ' + diffMin + ' min';
-  var diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return 'il y a ' + diffH + 'h';
-  var diffD = Math.round(diffH / 24);
-  if (diffD === 1) return 'hier';
-  if (diffD < 7) return 'il y a ' + diffD + 'j';
-  return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-}
-
-// Home screen: the last few finished games — what's more informative at a
-// glance than a raw lifetime count is what actually just happened.
-function renderRecentGames() {
-  if (!historyGames.length) {
-    els.recentGamesList.innerHTML = '<p class="history-empty">Aucune partie terminée pour l\'instant.</p>';
-    return;
-  }
-  var html = '';
-  historyGames.slice(0, 5).forEach(function (g) {
-    var winner = g.winnerIndex != null ? g.players[g.winnerIndex] : '—';
-    html += '<button type="button" class="history-item hi-recent" data-game-id="' + g.id + '">'
-      + '<div class="hi-main"><span class="hi-type">' + gameTypeLabel(g) + '</span>'
-      + '<span class="hi-players">' + g.players.map(escapeHtml).join(' · ') + '</span></div>'
-      + '<div style="text-align:right"><div>🏆 ' + escapeHtml(winner) + '</div><div class="hi-date">' + timeAgo(g.finishedAt) + '</div></div></button>';
-  });
-  els.recentGamesList.innerHTML = html;
-}
-els.recentGamesList.addEventListener('click', function (e) {
-  var b = e.target.closest('[data-game-id]');
-  if (!b) return;
-  openGameFromList(b.dataset.gameId);
-});
-
-// Home screen: who's actually winning right now, by name.
-function renderStats() {
-  if (!historyGames.length) {
-    els.statTiles.innerHTML = '<p class="stat-empty">Aucune partie terminée pour l\'instant.</p>';
-    return;
-  }
-  var wins = {};
-  historyGames.forEach(function (g) {
-    if (g.winnerIndex == null || g.players.length < 2) return;
-    if (g.winnerIndex === botIndex(g)) return;
-    var name = g.players[g.winnerIndex];
-    wins[name] = (wins[name] || 0) + 1;
-  });
-  var names = Object.keys(wins).sort(function (a, b) { return wins[b] - wins[a]; });
-  if (!names.length) {
-    els.statTiles.innerHTML = '<p class="stat-empty">Pas encore de partie à plusieurs.</p>';
-    return;
-  }
-  var max = wins[names[0]];
-  var html = '';
-  names.slice(0, 6).forEach(function (name) {
-    var pct = Math.max(6, Math.round((wins[name] / max) * 100));
-    html += '<div class="stat-row"><span class="stat-name">' + escapeHtml(name) + '</span>'
-      + '<span class="stat-bar-track"><span class="stat-bar-fill" style="width:' + pct + '%"></span></span>'
-      + '<span class="stat-val mono">' + wins[name] + '</span></div>';
-  });
-  els.statTiles.innerHTML = html;
-}
-
 function renderHistory() {
   if (!historyGames.length) {
     els.historyList.innerHTML = '<p class="history-empty">Aucune partie enregistrée pour l\'instant. Lance ta première partie !</p>';
@@ -1799,8 +1732,6 @@ function onPendingSnapshot(game) {
 }
 function onHistorySnapshot(list) {
   historyGames = list;
-  renderRecentGames();
-  renderStats();
   renderHistory();
   refreshStatsView();
   refreshPlayersDatalist(); // not the inputs themselves: that would steal focus mid-typing

@@ -10,7 +10,7 @@ var els = {};
   'setupForm', 'typeSeg', 'doubleOutField', 'doubleOutPills', 'playerPlus', 'nameInputs', 'playersDatalist',
   'setupStep1', 'setupStep2', 'setupBackBtn', 'modeCrumb', 'botAddBtn', 'rulesTitle', 'rulesGroup', 'setupSummary',
   'matchLegsField', 'legsMinus', 'legsPlus', 'legsCount', 'matchSetsField', 'setsMinus', 'setsPlus', 'setsCount',
-  'statTiles', 'recentGamesList', 'historyList', 'deleteGameConfirm', 'deleteGameConfirmText', 'deleteGameYes', 'deleteGameNo', 'backBtn', 'abandonBtn', 'abandonConfirm', 'abandonYes', 'abandonNo', 'playTitle', 'winnerBanner', 'topBadge', 'postGameActions', 'postGameUndoBtn', 'playAgainBtn',
+  'historyList', 'deleteGameConfirm', 'deleteGameConfirmText', 'deleteGameYes', 'deleteGameNo', 'backBtn', 'abandonBtn', 'abandonConfirm', 'abandonYes', 'abandonNo', 'playTitle', 'winnerBanner', 'topBadge', 'postGameActions', 'postGameUndoBtn', 'playAgainBtn',
   'matchRecapCard', 'matchRecapHint', 'matchRecapTable',
   'gameChartCard', 'gameChartTitle', 'gameChartLegend', 'gameChartWrap', 'gameChartSvg', 'gameChartTooltip',
   'cricketBoard', 'cricketTable',
