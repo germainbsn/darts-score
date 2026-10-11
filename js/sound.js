@@ -63,4 +63,8 @@ function setSoundEnabled(on) {
     els.soundToggle.textContent = on ? '🔊' : '🔇';
     els.soundToggle.setAttribute('aria-label', on ? 'Couper le son' : 'Activer le son');
   }
+  if (els.drawerSoundBtn) {
+    els.drawerSoundBtn.querySelector('use').setAttribute('href', on ? '#i-sound' : '#i-mute');
+    els.drawerSoundBtn.querySelector('span').textContent = on ? 'Son activé' : 'Son coupé';
+  }
 }

@@ -31,7 +31,7 @@ var els = {};
   'clockChartCard', 'clockChartPeriodSeg', 'clockChartWrap', 'clockChartSvg', 'clockChartTooltip', 'clockChartEmpty',
   'clockNumberStatsCard', 'clockNumberPeriodSeg', 'clockNumberSortSeg', 'clockNumberStatsList',
   'rankingStat', 'rankingList', 'rankingX01Field', 'rankingX01Filter', 'rankingRoundsField', 'rankingRoundsFilter', 'rankingClockField', 'rankingClockFilter',
-  'roundsField', 'roundsCount', 'roundsMinus', 'roundsPlus', 'soundToggle', 'voiceBtn',
+  'roundsField', 'roundsCount', 'roundsMinus', 'roundsPlus', 'soundToggle', 'voiceBtn', 'menuBtn', 'topbarWhere', 'drawer', 'drawerScrim', 'drawerSoundBtn',
   'voiceBackBtn', 'voiceProgress', 'voiceCurrent', 'voiceStatus', 'voiceRecBtn', 'voicePlayBtn', 'voicePrevBtn', 'voiceNextBtn', 'voiceDeleteBtn', 'voiceGrid',
   'clockFinishField', 'clockFinishSeg', 'clockMultiplierField', 'clockMultiplierSeg', 'clockOrderField', 'clockOrderSeg', 'clockBoard', 'clockPlayers', 'clockPad', 'clockHitBtn', 'clockMissBtn', 'clockMiss2Btn', 'clockMiss3Btn', 'undoClockBtn', 'clockTurnLabel', 'clockDartDots'
 ].forEach(function (id) {

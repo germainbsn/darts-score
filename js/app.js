@@ -28,6 +28,8 @@ function shufflePlayers(names, botSlot) {
 var botTurnRunning = false; // guards against a mid-turn re-render (each bot dart write fires the snapshot listener) kicking off a second, overlapping bot turn
 
 // ---------- tabs / navigation ----------
+// page name shown in the phone top bar, next to the menu button
+var TAB_TITLES = { home: 'Jouer', history: 'Historique', stats: 'Stats', ranking: 'Classement', play: 'En partie', voice: 'Ma voix' };
 var VIEWS_BY_TAB = { home: 'viewHome', history: 'viewHistory', stats: 'viewStats', ranking: 'viewRanking', play: 'viewPlay', voice: 'viewVoice' };
 function setTab(tab) {
   currentTab = tab;
@@ -41,6 +43,10 @@ function setTab(tab) {
   Array.prototype.forEach.call(els.mainTabs.querySelectorAll('.tab'), function (b) {
     b.classList.toggle('active', b.dataset.tab === tab && tab !== 'play');
   });
+  Array.prototype.forEach.call(els.drawer.querySelectorAll('[data-tab]'), function (b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  els.topbarWhere.textContent = TAB_TITLES[tab] || '';
   // Restart the fade/slide-in animation each time this view is (re)shown —
   // removing the class then forcing a reflow before re-adding it is what
   // makes a CSS animation replay on a class that never actually left the DOM.
@@ -68,6 +74,30 @@ els.voiceBackBtn.addEventListener('click', function () { playClick(); setTab('ho
 els.soundToggle.addEventListener('click', function () {
   setSoundEnabled(!soundEnabled);
   if (soundEnabled) playClick();
+});
+
+// ---------- phone menu (drawer) ----------
+// Below 720px the top tabs and icon buttons are hidden (CSS) and this
+// slide-in menu replaces them; it drives the very same setTab/sound code.
+function setDrawerOpen(open) {
+  els.drawer.classList.toggle('open', open);
+  els.drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+  els.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  els.drawerScrim.hidden = !open;
+  document.body.classList.toggle('drawer-open', open);
+  if (open) { var first = els.drawer.querySelector('.drawer-item'); if (first) first.focus(); }
+  else if (els.drawer.contains(document.activeElement)) els.menuBtn.focus();
+}
+els.menuBtn.addEventListener('click', function () { playClick(); setDrawerOpen(true); });
+els.drawerScrim.addEventListener('click', function () { setDrawerOpen(false); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && els.drawer.classList.contains('open')) setDrawerOpen(false); });
+els.drawer.addEventListener('click', function (e) {
+  var item = e.target.closest('[data-tab]');
+  if (item) { playClick(); setTab(item.dataset.tab); setDrawerOpen(false); return; }
+  if (e.target.closest('#drawerSoundBtn')) {
+    setSoundEnabled(!soundEnabled);
+    if (soundEnabled) playClick();
+  }
 });
 
 // Subscribe the Play view to one specific game, replacing any previous watch.
