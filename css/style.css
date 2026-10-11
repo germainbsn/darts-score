@@ -454,6 +454,19 @@ tr.stats-row th{text-align:left; padding-left:12px;}
   100%{transform:scale(1);}
 }
 .x01-card{animation:pop-in .28s ease;}
+#x01Board{position:relative;}
+.score-fx{
+  position:absolute; z-index:3; pointer-events:none; white-space:nowrap;
+  font-family:"Fraunces",serif; font-weight:900; font-size:1.6rem; color:var(--gold);
+  text-shadow:0 1px 0 var(--bg); animation:score-rise 1.3s cubic-bezier(.2,.7,.3,1) forwards;
+}
+.score-fx.bust{color:var(--danger); letter-spacing:.06em;}
+@keyframes score-rise{
+  0%{opacity:0; transform:translateY(10px) scale(.8);}
+  15%{opacity:1; transform:translateY(0) scale(1.05);}
+  70%{opacity:1;}
+  100%{opacity:0; transform:translateY(-38px) scale(1);}
+}
 .dart-dot{animation:pop-in .22s ease;}
 .mark{animation:pop-in .22s ease;}
 

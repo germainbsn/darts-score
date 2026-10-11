@@ -135,6 +135,34 @@ function dartEndsTurn() {
 }
 
 // ---------- rendering ----------
+// "+52" floating up from a player's score when a turn is committed (anyone's:
+// a click here, the bot, or another device through the snapshot). Detected
+// as the log growing by exactly one entry since the last render of this same
+// game, so opening or resuming a game, and undo, play nothing. The bubble
+// lives on #x01Board, outside the cards: the cards are rebuilt on every
+// render and would cut the animation short.
+var x01FxSeen = { id: null, len: 0 };
+function playX01ScoreFx(game, st) {
+  var len = (game.log || []).length;
+  var grew = x01FxSeen.id === game.id && len === x01FxSeen.len + 1;
+  x01FxSeen = { id: game.id, len: len };
+  if (!grew) return;
+  var e = st.entries[st.entries.length - 1];
+  var card = els.x01Players.children[e.player];
+  var num = card && card.querySelector('.remaining');
+  if (!num) return;
+  // position from offsetLeft/Top summed up to #x01Board: unlike
+  // getBoundingClientRect, they ignore the card's pop-in scale animation
+  var x = -els.x01Players.scrollLeft, y = 0;
+  for (var el = num; el && el !== els.x01Board; el = el.offsetParent) { x += el.offsetLeft; y += el.offsetTop; }
+  var fx = document.createElement('span');
+  fx.className = 'score-fx' + (e.bust ? ' bust' : '');
+  fx.textContent = e.bust ? 'BUST' : '+' + e.attempted;
+  fx.style.left = x + 'px';
+  fx.style.top = (y - 6) + 'px';
+  els.x01Board.appendChild(fx);
+  setTimeout(function () { fx.remove(); }, 1400);
+}
 function renderX01(game) {
   var st = computeX01State(game);
   els.x01Pad.hidden = st.finished;
@@ -162,6 +190,7 @@ function renderX01(game) {
   });
   els.x01Players.innerHTML = html;
   focusCurrentPlayerCard(els.x01Players, game.id, st.currentPlayer, st.finished);
+  playX01ScoreFx(game, st);
 
   if (game.type === 'x01' && !st.finished) {
     // same live adjustment, plus how many darts are left to suggest a
