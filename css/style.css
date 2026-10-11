@@ -260,6 +260,16 @@ button.history-item:hover{border-color:var(--gold);}
 .stats-summary{display:flex; gap:16px; flex-wrap:wrap;}
 .stats-summary .panel{flex:1 1 160px; text-align:center;}
 .stats-summary.milestones{gap:10px;}
+.bot-record-list{display:flex; flex-direction:column;}
+.bot-record-row{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(60px,1fr) auto; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--rule);}
+.bot-record-row:last-child{border-bottom:none;}
+.bot-record-level{font-weight:600;}
+.bot-record-avg{display:block; font-size:.75rem; font-weight:400; color:var(--ink-soft);}
+.bot-record-bar{height:8px; border-radius:4px; background:var(--surface-2); overflow:hidden;}
+.bot-record-bar span{display:block; height:100%; background:var(--gold); border-radius:4px;}
+.bot-record-figures{text-align:right; min-width:84px;}
+.bot-record-pct{display:block; font-weight:700; font-size:1.1rem;}
+.bot-record-count{display:block; font-size:.75rem; color:var(--ink-soft);}
 .stats-summary.milestones .panel{flex:1 1 90px; padding:14px 8px;}
 .stats-summary.milestones .stat-total{font-size:1.6rem;}
 

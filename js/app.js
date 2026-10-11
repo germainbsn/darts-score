@@ -955,8 +955,9 @@ function x01MilestoneStats(name, filterType) {
   r.first9Avg = x01Avg3(r.first9Scored, r.first9Darts);
   return r;
 }
-function statsForPlayer(name, filterType) {
-  var games = historyGames.filter(function (g) {
+// This player's finished games matching the Stats tab's mode filter.
+function statsGamesFor(name, filterType) {
+  return historyGames.filter(function (g) {
     if (g.players.indexOf(name) === -1) return false;
     if (filterType === 'cricket') return g.type === 'cricket';
     if (isX01Filter(filterType)) {
@@ -968,6 +969,9 @@ function statsForPlayer(name, filterType) {
     if (isClockFilter(filterType)) return g.type === 'clock' && (g.clockMultiplier || 'any') === clockFilterVariant(filterType);
     return true;
   });
+}
+function statsForPlayer(name, filterType) {
+  var games = statsGamesFor(name, filterType);
   // a solo game has no opponent, so "win" or "loss" is meaningless there —
   // keep it out of the victory-rate numerator/denominator while still
   // counting it for every other stat below (MPR, moyenne, darts-to-finish...).
@@ -1002,6 +1006,32 @@ function statsForPlayer(name, filterType) {
   var avgClockDarts = clockFinishes ? (totalClockDarts / clockFinishes) : 0;
 
   return { played: games.length, playedMulti: multiGames.length, wins: wins, pct: pct, mpr: mpr, avg3: avg3, avgClockDarts: avgClockDarts };
+}
+
+// Games played and won against each bot level, same mode filter. Each leg of
+// a match counts as one game, like everywhere else in the stats.
+function botRecordForPlayer(name, filterType) {
+  var byLevel = {};
+  statsGamesFor(name, filterType).forEach(function (g) {
+    if (g.botLevel == null || g.winnerIndex == null) return;
+    var r = byLevel[g.botLevel] || (byLevel[g.botLevel] = { level: g.botLevel, played: 0, wins: 0 });
+    r.played++;
+    if (g.players[g.winnerIndex] === name) r.wins++;
+  });
+  return Object.keys(byLevel).map(function (k) { return byLevel[k]; }).sort(function (a, b) { return a.level - b.level; });
+}
+function renderBotRecord() {
+  var rows = botRecordForPlayer(statsSelectedPlayer, statsFilterType);
+  els.statsBotCard.hidden = !rows.length;
+  els.statsBotList.innerHTML = rows.map(function (r) {
+    var pct = Math.round(r.wins / r.played * 100);
+    return '<div class="bot-record-row">'
+      + '<span class="bot-record-level">🤖 Niveau ' + r.level + ' <span class="bot-record-avg">moy. ~' + (15 + 10 * r.level) + '</span></span>'
+      + '<span class="bot-record-bar"><span style="width:' + pct + '%"></span></span>'
+      + '<span class="bot-record-figures"><span class="mono bot-record-pct">' + pct + '%</span>'
+      + '<span class="bot-record-count">' + r.wins + ' / ' + r.played + (r.played > 1 ? ' parties' : ' partie') + '</span></span>'
+      + '</div>';
+  }).join('');
 }
 
 // Top 100 of this player's own best individual-game performances for the
@@ -1129,6 +1159,7 @@ function renderStatsDetail() {
     els.statsFourthTile.hidden = true;
     els.statsMilestonesCard.hidden = true;
   }
+  renderBotRecord();
   renderStatsTopList();
   renderMprChart();
   renderAvg3Chart();
