@@ -55,7 +55,9 @@ function renderCricket(game) {
   });
   html += '</tr></thead><tbody>';
   CRICKET_NUMS.forEach(function (num, idx) {
-    html += '<tr><th><span class="num-chip' + (num === 25 ? ' bull' : '') + '">' + CRICKET_LABELS[num] + '</span></th>';
+    // closed by everyone: nobody can score on it any more
+    var dead = st.marks.every(function (pm) { return pm[idx] >= 3; });
+    html += '<tr' + (dead ? ' class="dead-row"' : '') + '><th><span class="num-chip' + (num === 25 ? ' bull' : '') + '">' + CRICKET_LABELS[num] + '</span></th>';
     game.players.forEach(function (name, pi) {
       var m = st.marks[pi][idx];
       var cls = 'mark-cell' + (m >= 3 ? ' closed' : '') + (pi === st.currentPlayer && !st.finished ? ' cur' : '');

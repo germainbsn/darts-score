@@ -677,6 +677,8 @@ function maybeStartBotTurn(game) {
   botTurnRunning = true;
   runBotTurn(game, bi).catch(function (e) { console.error(e); }).then(function () { botTurnRunning = false; });
 }
+// Pause between two bot darts: 1.2-2 s, slow enough to follow each dart.
+function botDartPause() { return 1200 + Math.random() * 800; }
 async function runBotTurn(game, bi) {
   function stillHere() { return activeGame && activeGame.id === game.id; }
   await sleep(500 + Math.random() * 300);
@@ -698,7 +700,7 @@ async function runBotTurn(game, bi) {
       x01DartMult.push(darts[i].mult);
       x01Input = String(sumDarts(x01Darts));
       renderX01(activeGame);
-      await sleep(600 + Math.random() * 400);
+      await sleep(botDartPause());
     }
     x01EntryMode = savedMode;
     if (!stillHere()) return;
@@ -724,7 +726,7 @@ async function runBotTurn(game, bi) {
         selectedMult = cDarts[j].mult;
         await applyCricketDart(cDarts[j].number);
       }
-      await sleep(600 + Math.random() * 400);
+      await sleep(botDartPause());
     }
     selectedMult = savedMult;
 
@@ -734,7 +736,7 @@ async function runBotTurn(game, bi) {
       if (!stillHere()) break;
       if (computeClockState(activeGame).finished) break;
       if (kDarts[k].hit) { await applyClockHit(); } else { await applyClockMiss(1); }
-      await sleep(600 + Math.random() * 400);
+      await sleep(botDartPause());
     }
   }
 }

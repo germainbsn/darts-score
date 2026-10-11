@@ -307,6 +307,10 @@ table.cricket-table tbody th{text-align:left; padding-left:12px; white-space:now
 }
 .num-chip.bull{font-size:.8rem;}
 td.mark-cell{position:relative;}
+table.cricket-table tr.dead-row th, table.cricket-table tr.dead-row td{
+  background-image:linear-gradient(transparent calc(50% - 1px), var(--ink-soft) calc(50% - 1px), var(--ink-soft) calc(50% + 1px), transparent calc(50% + 1px));
+}
+tr.dead-row .num-chip, tr.dead-row .mark{opacity:.35;}
 td.mark-cell.cur{background:var(--gold-soft);}
 .mark{width:26px; height:26px; margin:0 auto; display:block; stroke:var(--ink-soft); stroke-width:2.4; stroke-linecap:round; fill:none;}
 td.mark-cell.closed .mark{stroke:var(--gold-ink); stroke-width:2.6;}
