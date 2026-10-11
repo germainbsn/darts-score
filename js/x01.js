@@ -189,6 +189,12 @@ function renderX01(game) {
       + '</div>';
   });
   els.x01Players.innerHTML = html;
+  // switchable mid-game (301/501 only) for when it was set wrong at launch
+  els.x01OutSeg.hidden = game.type !== 'x01' || st.finished;
+  Array.prototype.forEach.call(els.x01OutSeg.querySelectorAll('button'), function (b) {
+    b.classList.toggle('active', (b.dataset.double === '1') === !!game.doubleOut);
+    b.disabled = botIndex(game) === st.currentPlayer;
+  });
   focusCurrentPlayerCard(els.x01Players, game.id, st.currentPlayer, st.finished);
   playX01ScoreFx(game, st);
 
@@ -384,3 +390,11 @@ els.x01Submit.addEventListener('click', submitX01Turn);
 els.undoX01Btn.addEventListener('click', undoX01);
 els.checkoutYes.addEventListener('click', function () { if (pendingAttempt != null) commitX01Turn(pendingAttempt, true); });
 els.checkoutNo.addEventListener('click', function () { if (pendingAttempt != null) commitX01Turn(pendingAttempt, false); });
+els.x01OutSeg.addEventListener('click', function (e) {
+  var b = e.target.closest('button');
+  if (!b || b.disabled || !activeGame || activeGame.type !== 'x01') return;
+  var want = b.dataset.double === '1';
+  if (want === !!activeGame.doubleOut) return;
+  playClick();
+  Store.updateGame(activeGame.id, { doubleOut: want });
+});

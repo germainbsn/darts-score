@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- bumped by scripts/bump-version.sh (pre-commit hook): busts the browser cache of css/js -->
-<meta name="app-version" content="20261011223612">
+<meta name="app-version" content="20261011230847">
 <title>Triple Vingt</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Mono:wght@400;700&family=Karla:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261011223612">
+<link rel="stylesheet" href="css/style.css?v=20261011230847">
 </head>
 <body>
 
@@ -95,99 +95,95 @@
     </div>
     <div class="panels">
       <div class="panel">
-        <h2>Nouvelle partie</h2>
         <form id="setupForm">
-          <div class="field">
-            <label>Mode de jeu</label>
-            <div class="segmented" id="typeSeg">
-              <button type="button" data-type="cricket" class="active">Cricket</button>
-              <button type="button" data-type="301">301</button>
-              <button type="button" data-type="501">501</button>
-              <button type="button" data-type="score">Score</button>
-              <button type="button" data-type="clock">Horloge</button>
+          <!-- step 1: pick the game (a tap goes straight to step 2) -->
+          <div class="setup-step" id="setupStep1">
+            <h2>À quoi on joue&nbsp;?</h2>
+            <div class="mode-tiles" id="typeSeg">
+              <button type="button" class="mode-tile" data-type="cricket"><span class="mode-logo" data-logo="cricket"></span><b>Cricket</b><span class="mode-desc">Fermer 15 à 20 et le bull</span></button>
+              <button type="button" class="mode-tile" data-type="301"><span class="mode-logo" data-logo="301"></span><b>301</b><span class="mode-desc">Descendre à zéro, partie courte</span></button>
+              <button type="button" class="mode-tile" data-type="501"><span class="mode-logo" data-logo="501"></span><b>501</b><span class="mode-desc">La version longue</span></button>
+              <button type="button" class="mode-tile" data-type="clock"><span class="mode-logo" data-logo="clock"></span><b>Horloge</b><span class="mode-desc">Chaque numéro de 1 à 20</span></button>
+              <button type="button" class="mode-tile wide" data-type="score"><span class="mode-logo" data-logo="score"></span><span class="mode-txt"><b>Score</b><span class="mode-desc">Le plus de points en N tours</span></span></button>
             </div>
           </div>
-          <div class="field" id="doubleOutField" hidden>
-            <label class="checkline"><input type="checkbox" id="doubleOutCheck"> Fermeture sur un double obligatoire</label>
-          </div>
-          <div class="field" id="clockFinishField" hidden>
-            <label>Finir sur</label>
-            <div class="segmented" id="clockFinishSeg">
-              <button type="button" data-finish="any" class="active">25 ou 50</button>
-              <button type="button" data-finish="outer">25</button>
-              <button type="button" data-finish="bull">50</button>
+
+          <!-- step 2: players, bot and the chosen game's settings -->
+          <div class="setup-step" id="setupStep2" hidden>
+            <div class="step-head">
+              <button type="button" class="step-back" id="setupBackBtn" aria-label="Revenir au choix du jeu"><svg viewBox="0 0 24 24" class="ui-icon"><path d="M15 5l-7 7 7 7"/></svg></button>
+              <h2>Qui joue&nbsp;?</h2>
             </div>
-          </div>
-          <div class="field" id="clockMultiplierField" hidden>
-            <label>Touché requis</label>
-            <div class="segmented" id="clockMultiplierSeg">
-              <button type="button" data-mult="any" class="active">Simple</button>
-              <button type="button" data-mult="double">Doubles uniquement</button>
-              <button type="button" data-mult="triple">Triples uniquement</button>
-            </div>
-          </div>
-          <div class="field" id="clockOrderField" hidden>
-            <label>Ordre des cibles</label>
-            <div class="segmented" id="clockOrderSeg">
-              <button type="button" data-order="sequential" class="active">Croissant</button>
-              <button type="button" data-order="random">Aléatoire</button>
-            </div>
-          </div>
-          <div class="field" id="roundsField" hidden>
-            <label>Nombre de lancers (3 fléchettes)</label>
-            <div class="stepper">
-              <button type="button" id="roundsMinus">−</button>
-              <span class="count mono" id="roundsCount">10</span>
-              <button type="button" id="roundsPlus">+</button>
-            </div>
-          </div>
-          <div class="field">
-            <label>Joueurs</label>
-            <div class="stepper">
-              <button type="button" id="playerMinus">−</button>
-              <span class="count mono" id="playerCount">2</span>
-              <button type="button" id="playerPlus">+</button>
-            </div>
-          </div>
-          <div class="field">
-            <label class="checkline"><input type="checkbox" id="botCheck"> 🤖 Jouer contre un bot</label>
-          </div>
-          <div class="field" id="botLevelField" hidden>
-            <label>Niveau du bot</label>
-            <select id="botLevelSelect">
-              <option value="1">1 — Débutant (moy. ~25)</option>
-              <option value="2">2 (moy. ~35)</option>
-              <option value="3">3 (moy. ~45)</option>
-              <option value="4">4 (moy. ~55)</option>
-              <option value="5" selected>5 — Moyen (moy. ~65)</option>
-              <option value="6">6 (moy. ~75)</option>
-              <option value="7">7 (moy. ~85)</option>
-              <option value="8">8 (moy. ~95)</option>
-              <option value="9">9 (moy. ~105)</option>
-              <option value="10">10 — Pro (moy. ~115)</option>
-            </select>
-          </div>
-          <div class="field" id="matchLegsField" hidden>
-            <label>Manches gagnantes (par set)</label>
-            <div class="stepper">
-              <button type="button" id="legsMinus">−</button>
-              <span class="count mono" id="legsCount">1</span>
-              <button type="button" id="legsPlus">+</button>
-            </div>
-          </div>
-          <div class="field" id="matchSetsField" hidden>
-            <label>Sets gagnants</label>
-            <div class="stepper">
-              <button type="button" id="setsMinus">−</button>
-              <span class="count mono" id="setsCount">1</span>
-              <button type="button" id="setsPlus">+</button>
-            </div>
-          </div>
-          <div class="field">
-            <div class="name-inputs" id="nameInputs"></div>
+            <div class="mode-crumb" id="modeCrumb"></div>
+            <div class="sect-title">Joueurs</div>
+            <div class="setup-group" id="nameInputs"></div>
             <datalist id="playersDatalist"></datalist>
+            <div class="add-row">
+              <button type="button" class="add-btn" id="playerPlus">+ Joueur</button>
+              <button type="button" class="add-btn" id="botAddBtn">🤖 Bot</button>
+            </div>
+            <div class="sect-title" id="rulesTitle">Réglages</div>
+            <div class="setup-group" id="rulesGroup">
+              <div class="setup-row" id="doubleOutField" hidden>
+                <span>Fin de partie</span>
+                <div class="pills" id="doubleOutPills">
+                  <button type="button" data-double="0" class="active">Simple</button>
+                  <button type="button" data-double="1">Double</button>
+                </div>
+              </div>
+              <div class="setup-row" id="clockFinishField" hidden>
+                <span>Finir sur</span>
+                <div class="pills" id="clockFinishSeg">
+                  <button type="button" data-finish="any" class="active">25/50</button>
+                  <button type="button" data-finish="outer">25</button>
+                  <button type="button" data-finish="bull">50</button>
+                </div>
+              </div>
+              <div class="setup-row" id="clockMultiplierField" hidden>
+                <span>Touché requis</span>
+                <div class="pills" id="clockMultiplierSeg">
+                  <button type="button" data-mult="any" class="active">Simple</button>
+                  <button type="button" data-mult="double">Double</button>
+                  <button type="button" data-mult="triple">Triple</button>
+                </div>
+              </div>
+              <div class="setup-row" id="clockOrderField" hidden>
+                <span>Ordre</span>
+                <div class="pills" id="clockOrderSeg">
+                  <button type="button" data-order="sequential" class="active">1→20</button>
+                  <button type="button" data-order="random">Aléatoire</button>
+                </div>
+              </div>
+              <div class="setup-row" id="roundsField" hidden>
+                <span>Nombre de tours</span>
+                <div class="stepper">
+                  <button type="button" id="roundsMinus" aria-label="Moins de tours">−</button>
+                  <span class="count mono" id="roundsCount">10</span>
+                  <button type="button" id="roundsPlus" aria-label="Plus de tours">+</button>
+                </div>
+              </div>
+              <div class="setup-row" id="matchLegsField" hidden>
+                <span>Manches gagnantes</span>
+                <div class="stepper">
+                  <button type="button" id="legsMinus" aria-label="Moins de manches">−</button>
+                  <span class="count mono" id="legsCount">1</span>
+                  <button type="button" id="legsPlus" aria-label="Plus de manches">+</button>
+                </div>
+              </div>
+              <div class="setup-row" id="matchSetsField" hidden>
+                <span>Sets gagnants</span>
+                <div class="stepper">
+                  <button type="button" id="setsMinus" aria-label="Moins de sets">−</button>
+                  <span class="count mono" id="setsCount">1</span>
+                  <button type="button" id="setsPlus" aria-label="Plus de sets">+</button>
+                </div>
+              </div>
+            </div>
+            <div class="setup-footer">
+              <div class="setup-summary" id="setupSummary"></div>
+              <button class="btn" type="submit">Lancer la partie</button>
+            </div>
           </div>
-          <button class="btn" type="submit">Lancer la partie</button>
         </form>
       </div>
       <div class="panel">
@@ -512,6 +508,10 @@
     </div>
 
     <div id="x01Board" hidden>
+      <div class="segmented small out-seg" id="x01OutSeg" role="group" aria-label="Fin de partie" hidden>
+        <button type="button" data-double="0">Sortie simple</button>
+        <button type="button" data-double="1">Double sortie</button>
+      </div>
       <div class="x01-players" id="x01Players"></div>
       <div class="notice checkout-hint" id="checkoutHint" hidden></div>
       <div class="x01-pad" id="x01Pad">
@@ -579,16 +579,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="js/constants.js?v=20261011223612"></script>
-<script src="js/dom.js?v=20261011223612"></script>
-<script src="js/state.js?v=20261011223612"></script>
-<script src="js/sound.js?v=20261011223612"></script>
-<script src="js/store.js?v=20261011223612"></script>
-<script src="js/cricket.js?v=20261011223612"></script>
-<script src="js/x01.js?v=20261011223612"></script>
-<script src="js/clock.js?v=20261011223612"></script>
-<script src="js/bot.js?v=20261011223612"></script>
-<script src="js/voice.js?v=20261011223612"></script>
-<script src="js/app.js?v=20261011223612"></script>
+<script src="js/constants.js?v=20261011230847"></script>
+<script src="js/dom.js?v=20261011230847"></script>
+<script src="js/state.js?v=20261011230847"></script>
+<script src="js/sound.js?v=20261011230847"></script>
+<script src="js/store.js?v=20261011230847"></script>
+<script src="js/cricket.js?v=20261011230847"></script>
+<script src="js/x01.js?v=20261011230847"></script>
+<script src="js/clock.js?v=20261011230847"></script>
+<script src="js/bot.js?v=20261011230847"></script>
+<script src="js/voice.js?v=20261011230847"></script>
+<script src="js/app.js?v=20261011230847"></script>
 </body>
 </html>

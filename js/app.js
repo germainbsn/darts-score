@@ -118,12 +118,16 @@ function watchGame(id) {
 }
 
 // ---------- setup form ----------
+// Two steps: tap a game tile (step 1), then players, bot and that game's
+// settings (step 2) with the launch button. The back arrow and the crumb's
+// "Changer" return to step 1; players and settings are kept.
 var setupType = 'cricket';
-var playerCount = 2;
+var playerCount = 2; // humans + the bot, if any
 var roundsCount = 10;
 var clockFinishMode = 'any';
 var clockMultiplier = 'any';
 var clockOrderMode = 'sequential';
+var setupDoubleOut = false;
 var legsToWin = 1;
 var setsToWin = 1;
 var botLevel = null; // null = no bot; 1-10 otherwise — the bot fills the last setup slot (the start order is shuffled at creation)
@@ -133,88 +137,191 @@ try {
   if (raw) savedNames = JSON.parse(raw);
 } catch (e) { savedNames = []; }
 
-// One plain text input per player, same as before — but backed by a shared
-// <datalist> of known players so typing offers suggestions. Native, minimal,
-// and typing anything not in the list just adds a new player.
-function renderNameInputs() {
+var MODE_NAMES = { cricket: 'Cricket', '301': '301', '501': '501', clock: 'Horloge', score: 'Score' };
+
+// Game logos: a small dartboard where the part that matters in that game is
+// lit (15-20 + bull for Cricket, treble 20 + a plaque for 301/501, a white
+// clockwise arrow for the clock, the treble ring for Score).
+var DART_RING_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+function boardArc(r1, r2, a1, a2) {
+  function p(r, a) { return (24 + r * Math.sin(a)).toFixed(2) + ' ' + (24 - r * Math.cos(a)).toFixed(2); }
+  return 'M' + p(r2, a1) + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + p(r2, a2) + ' L' + p(r1, a2) + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + p(r1, a1) + 'Z';
+}
+function clockArrowSvg() {
+  var r = 13.5, a1 = 0.35, a2 = Math.PI * 2 * 0.8;
+  function p(a) { return [24 + r * Math.sin(a), 24 - r * Math.cos(a)]; }
+  function xy(v) { return v[0].toFixed(2) + ' ' + v[1].toFixed(2); }
+  var A = p(a1), B = p(a2), t = [Math.cos(a2), Math.sin(a2)], n = [Math.sin(a2), -Math.cos(a2)];
+  var arcD = 'M' + xy(A) + ' A' + r + ' ' + r + ' 0 1 1 ' + xy(B);
+  var head = 'M' + xy([B[0] + t[0] * 7, B[1] + t[1] * 7]) + ' L' + xy([B[0] + n[0] * 6, B[1] + n[1] * 6]) + ' L' + xy([B[0] - n[0] * 6, B[1] - n[1] * 6]) + 'Z';
+  return '<path d="' + arcD + '" fill="none" stroke="var(--board)" stroke-width="8" stroke-linecap="round"/>'
+    + '<path d="' + head + '" fill="var(--board)" stroke="var(--board)" stroke-width="3" stroke-linejoin="round"/>'
+    + '<path d="' + arcD + '" fill="none" stroke="var(--white)" stroke-width="4.5" stroke-linecap="round"/>'
+    + '<path d="' + head + '" fill="var(--white)"/>';
+}
+function modeLogoSvg(id) {
+  var seg = Math.PI * 2 / 20, out = '<circle cx="24" cy="24" r="22.5" fill="var(--board)" stroke="var(--rule)"/>';
+  var x01 = id === '301' || id === '501';
+  DART_RING_ORDER.forEach(function (n, i) {
+    var a1 = i * seg - seg / 2, a2 = a1 + seg;
+    var base = i % 2 === 0 ? 'color-mix(in srgb, var(--cream) 22%, var(--board))' : 'color-mix(in srgb, var(--cream) 8%, var(--board))';
+    var ringCol = i % 2 === 0 ? 'var(--red)' : 'var(--green)';
+    var hot = id === 'cricket' && n >= 15, t20 = x01 && n === 20;
+    out += '<path d="' + boardArc(4, 19, a1, a2) + '" fill="' + (hot ? ringCol : base) + '"/>';
+    if (id === 'clock') out += '<path d="' + boardArc(19, 22, a1, a2) + '" fill="var(--gold)" opacity="' + (0.15 + 0.85 * n / 20).toFixed(2) + '"/>';
+    else out += '<path d="' + boardArc(19, 22, a1, a2) + '" fill="' + (t20 ? 'var(--gold)' : ringCol) + '" opacity="' + (hot ? 1 : 0.35) + '"/>';
+    out += '<path d="' + boardArc(10.5, 13, a1, a2) + '" fill="' + (t20 ? 'var(--gold)' : ringCol) + '" opacity="' + (hot || t20 || id === 'score' ? 1 : 0.35) + '"/>';
+  });
+  var bull = id === 'cricket' ? 1 : 0.55;
+  out += '<circle cx="24" cy="24" r="4" fill="var(--green)" opacity="' + bull + '"/><circle cx="24" cy="24" r="1.8" fill="var(--red)" opacity="' + bull + '"/>';
+  if (x01) out += '<rect x="4.5" y="25.5" width="39" height="18" rx="5" fill="var(--surface)" stroke="var(--gold)" stroke-width="1.5"/>'
+    + '<text x="24" y="39" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-weight="900" font-size="14.5" fill="var(--gold-ink)">' + id + '</text>';
+  if (id === 'clock') out += clockArrowSvg();
+  return '<svg class="mode-svg" viewBox="0 0 48 48" aria-hidden="true">' + out + '</svg>';
+}
+Array.prototype.forEach.call(document.querySelectorAll('[data-logo]'), function (el) { el.innerHTML = modeLogoSvg(el.dataset.logo); });
+
+function setSetupStep(step) {
+  els.setupStep1.hidden = step !== 1;
+  els.setupStep2.hidden = step !== 2;
+}
+function humanNameValues() {
+  return Array.prototype.map.call(els.nameInputs.querySelectorAll('input'), function (inp) { return inp.value; });
+}
+// One text input per human (backed by a shared <datalist> of known players
+// for suggestions), a × to remove that row, and the bot as its own row.
+// `values` replaces the current names (used when a row is removed).
+function refreshPlayersDatalist() {
   els.playersDatalist.innerHTML = uniquePlayerNames().map(function (p) {
     return '<option value="' + escapeHtml(p) + '">';
   }).join('');
-  var existing = els.nameInputs.querySelectorAll('input');
-  var html = '';
+}
+function renderNameInputs(values) {
+  refreshPlayersDatalist();
+  var current = values || humanNameValues();
   var humanCount = botLevel != null ? playerCount - 1 : playerCount;
+  var canRemove = playerCount > 1 && (botLevel == null || humanCount > 1);
+  var html = '';
   for (var i = 0; i < humanCount; i++) {
-    var val = (existing[i] ? existing[i].value : (savedNames[i] || '')).replace(/"/g, '&quot;');
-    html += '<input type="text" list="playersDatalist" maxlength="18" placeholder="Joueur ' + (i + 1) + '" value="' + val + '">';
+    var val = current[i] != null ? current[i] : (savedNames[i] || '');
+    html += '<div class="player-row"><span class="player-av">' + (i + 1) + '</span>'
+      + '<input type="text" list="playersDatalist" maxlength="18" placeholder="Joueur ' + (i + 1) + '" value="' + escapeHtml(val) + '" aria-label="Nom du joueur ' + (i + 1) + '">'
+      + (canRemove ? '<button type="button" class="row-x" data-remove="' + i + '" aria-label="Retirer ce joueur">×</button>' : '')
+      + '</div>';
   }
   if (botLevel != null) {
-    html += '<div class="bot-name-slot">🤖 Bot niveau ' + botLevel + '</div>';
+    html += '<div class="player-row bot"><span class="player-av bot">🤖</span>'
+      + '<span class="bot-label">Bot niveau ' + botLevel + '<small>moyenne ~' + (15 + 10 * botLevel) + '</small></span>'
+      + '<span class="stepper small"><button type="button" data-bot-level="-1" aria-label="Bot plus faible">−</button><button type="button" data-bot-level="1" aria-label="Bot plus fort">+</button></span>'
+      + '<button type="button" class="row-x" data-remove-bot aria-label="Retirer le bot">×</button></div>';
   }
   els.nameInputs.innerHTML = html;
+  els.botAddBtn.hidden = botLevel != null;
+  els.playerPlus.hidden = playerCount >= 10;
+  updateSetupSettings();
 }
-renderNameInputs();
-// Legs-per-set / sets-to-win a match only make sense with an opponent.
-function updateMatchFieldsVisibility() {
-  els.matchLegsField.hidden = playerCount < 2;
-  els.matchSetsField.hidden = playerCount < 2;
-}
-updateMatchFieldsVisibility();
-
-els.typeSeg.addEventListener('click', function (e) {
-  var b = e.target.closest('button');
-  if (!b) return;
-  playClick();
-  setupType = b.dataset.type;
-  Array.prototype.forEach.call(els.typeSeg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
-  els.doubleOutField.hidden = setupType !== '301' && setupType !== '501';
-  els.roundsField.hidden = setupType !== 'score';
+// Settings rows for the chosen game; match rows only with an opponent.
+function updateSetupSettings() {
+  var isX01 = setupType === '301' || setupType === '501';
+  els.doubleOutField.hidden = !isX01;
   els.clockFinishField.hidden = setupType !== 'clock';
   els.clockMultiplierField.hidden = setupType !== 'clock';
   els.clockOrderField.hidden = setupType !== 'clock';
-});
-els.playerMinus.addEventListener('click', function () { if (playerCount > (botLevel != null ? 2 : 1)) { playClick(); playerCount--; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
-els.playerPlus.addEventListener('click', function () { if (playerCount < 10) { playClick(); playerCount++; els.playerCount.textContent = playerCount; renderNameInputs(); updateMatchFieldsVisibility(); } });
-els.botCheck.addEventListener('click', function () {
+  els.roundsField.hidden = setupType !== 'score';
+  els.matchLegsField.hidden = playerCount < 2;
+  els.matchSetsField.hidden = playerCount < 2;
+  var anyRule = Array.prototype.some.call(els.rulesGroup.children, function (r) { return !r.hidden; });
+  els.rulesGroup.hidden = !anyRule;
+  els.rulesTitle.hidden = !anyRule;
+  renderSetupSummary();
+}
+function renderSetupSummary() {
+  var names = humanNameValues().map(function (v, i) { return v.trim() || ('Joueur ' + (i + 1)); });
+  var who = botLevel != null ? names.join(', ') + ' vs bot ' + botLevel : (names.length > 3 ? names.length + ' joueurs' : names.join(', '));
+  var mode = MODE_NAMES[setupType];
+  if (setupType === '301' || setupType === '501') mode += setupDoubleOut ? ' · double sortie' : ' · sortie simple';
+  els.setupSummary.textContent = mode + ' · ' + who;
+}
+function chooseSetupMode(type) {
+  setupType = type;
+  els.modeCrumb.innerHTML = '<span class="mode-logo">' + modeLogoSvg(type) + '</span><span>' + MODE_NAMES[type] + '</span>'
+    + '<button type="button" id="modeCrumbChange">Changer</button>';
+  setSetupStep(2);
+  renderNameInputs();
+}
+renderNameInputs();
+setSetupStep(1);
+
+els.typeSeg.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-type]');
+  if (!b) return;
   playClick();
-  botLevel = els.botCheck.checked ? parseInt(els.botLevelSelect.value, 10) : null;
-  els.botLevelField.hidden = botLevel == null;
-  // A solo bot doesn't make sense — force at least one human opponent.
-  if (botLevel != null && playerCount < 2) { playerCount = 2; els.playerCount.textContent = playerCount; }
-  renderNameInputs();
-  updateMatchFieldsVisibility();
+  chooseSetupMode(b.dataset.type);
 });
-els.botLevelSelect.addEventListener('change', function () {
-  if (botLevel == null) return;
-  botLevel = parseInt(els.botLevelSelect.value, 10);
+els.setupBackBtn.addEventListener('click', function () { playClick(); setSetupStep(1); });
+els.modeCrumb.addEventListener('click', function (e) { if (e.target.closest('#modeCrumbChange')) { playClick(); setSetupStep(1); } });
+els.nameInputs.addEventListener('input', renderSetupSummary);
+els.nameInputs.addEventListener('click', function (e) {
+  var t;
+  if ((t = e.target.closest('[data-remove]'))) {
+    playClick();
+    var vals = humanNameValues();
+    vals.splice(parseInt(t.dataset.remove, 10), 1);
+    playerCount--;
+    renderNameInputs(vals);
+    return;
+  }
+  if (e.target.closest('[data-remove-bot]')) {
+    playClick();
+    botLevel = null; playerCount--;
+    renderNameInputs();
+    return;
+  }
+  if ((t = e.target.closest('[data-bot-level]'))) {
+    var lvl = Math.max(1, Math.min(10, botLevel + parseInt(t.dataset.botLevel, 10)));
+    if (lvl !== botLevel) { playClick(); botLevel = lvl; try { localStorage.setItem('tv_botLevel', String(lvl)); } catch (err) { } renderNameInputs(); }
+  }
+});
+els.playerPlus.addEventListener('click', function () {
+  if (playerCount >= 10) return;
+  playClick();
+  var vals = humanNameValues();
+  vals.push(savedNames[vals.length] || '');
+  playerCount++;
+  renderNameInputs(vals);
+  var inputs = els.nameInputs.querySelectorAll('input');
+  if (inputs.length && !inputs[inputs.length - 1].value) inputs[inputs.length - 1].focus();
+});
+els.botAddBtn.addEventListener('click', function () {
+  if (botLevel != null || playerCount >= 10) return;
+  playClick();
+  var lastLevel = 5;
+  try { lastLevel = parseInt(localStorage.getItem('tv_botLevel'), 10) || 5; } catch (err) { }
+  botLevel = lastLevel;
+  playerCount++;
   renderNameInputs();
 });
+// pill groups: one active button, value read from its data attribute
+function bindPills(seg, onPick) {
+  seg.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    playClick();
+    Array.prototype.forEach.call(seg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
+    onPick(b);
+    renderSetupSummary();
+  });
+}
+bindPills(els.doubleOutPills, function (b) { setupDoubleOut = b.dataset.double === '1'; });
+bindPills(els.clockFinishSeg, function (b) { clockFinishMode = b.dataset.finish; });
+bindPills(els.clockMultiplierSeg, function (b) { clockMultiplier = b.dataset.mult; });
+bindPills(els.clockOrderSeg, function (b) { clockOrderMode = b.dataset.order; });
 els.legsMinus.addEventListener('click', function () { if (legsToWin > 1) { playClick(); legsToWin--; els.legsCount.textContent = legsToWin; } });
 els.legsPlus.addEventListener('click', function () { if (legsToWin < 9) { playClick(); legsToWin++; els.legsCount.textContent = legsToWin; } });
 els.setsMinus.addEventListener('click', function () { if (setsToWin > 1) { playClick(); setsToWin--; els.setsCount.textContent = setsToWin; } });
 els.setsPlus.addEventListener('click', function () { if (setsToWin < 9) { playClick(); setsToWin++; els.setsCount.textContent = setsToWin; } });
 els.roundsMinus.addEventListener('click', function () { if (roundsCount > 3) { playClick(); roundsCount--; els.roundsCount.textContent = roundsCount; } });
 els.roundsPlus.addEventListener('click', function () { if (roundsCount < 20) { playClick(); roundsCount++; els.roundsCount.textContent = roundsCount; } });
-els.clockFinishSeg.addEventListener('click', function (e) {
-  var b = e.target.closest('button');
-  if (!b) return;
-  playClick();
-  clockFinishMode = b.dataset.finish;
-  Array.prototype.forEach.call(els.clockFinishSeg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
-});
-els.clockMultiplierSeg.addEventListener('click', function (e) {
-  var b = e.target.closest('button');
-  if (!b) return;
-  playClick();
-  clockMultiplier = b.dataset.mult;
-  Array.prototype.forEach.call(els.clockMultiplierSeg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
-});
-els.clockOrderSeg.addEventListener('click', function (e) {
-  var b = e.target.closest('button');
-  if (!b) return;
-  playClick();
-  clockOrderMode = b.dataset.order;
-  Array.prototype.forEach.call(els.clockOrderSeg.querySelectorAll('button'), function (x) { x.classList.toggle('active', x === b); });
-});
 
 els.setupForm.addEventListener('submit', async function (e) {
   e.preventDefault();
@@ -239,7 +346,7 @@ els.setupForm.addEventListener('submit', async function (e) {
   var data = {
     type: setupType === 'cricket' ? 'cricket' : (setupType === 'score' ? 'score' : (setupType === 'clock' ? 'clock' : 'x01')),
     variant: (setupType === 'cricket' || setupType === 'clock') ? null : (setupType === 'score' ? roundsCount : parseInt(setupType, 10)),
-    doubleOut: isX01 ? els.doubleOutCheck.checked : false,
+    doubleOut: isX01 ? setupDoubleOut : false,
     finishMode: setupType === 'clock' ? clockFinishMode : null,
     clockMultiplier: setupType === 'clock' ? clockMultiplier : null,
     clockOrder: clockOrder,
@@ -257,6 +364,7 @@ els.setupForm.addEventListener('submit', async function (e) {
   };
   var id = await Store.createGame(data);
   watchGame(id);
+  setSetupStep(1); // next visit starts from the game choice again; players are kept
   setTab('play');
 });
 
@@ -1695,7 +1803,7 @@ function onHistorySnapshot(list) {
   renderStats();
   renderHistory();
   refreshStatsView();
-  renderNameInputs();
+  refreshPlayersDatalist(); // not the inputs themselves: that would steal focus mid-typing
   if (currentTab === 'ranking') renderRanking();
   // the just-finished active game may not have been in historyGames yet when
   // renderWinner first tried the top-5 check (a separate, slightly-delayed
