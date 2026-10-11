@@ -14,7 +14,7 @@ var els = {};
   'matchRecapCard', 'matchRecapHint', 'matchRecapTable',
   'gameChartCard', 'gameChartTitle', 'gameChartLegend', 'gameChartWrap', 'gameChartSvg', 'gameChartTooltip',
   'cricketBoard', 'cricketTable',
-  'dartPad', 'multChips', 'numGrid', 'missBtn', 'undoCricketBtn', 'cricketTurnLabel', 'dartDots',
+  'dartPad', 'multChips', 'numGrid', 'missBtn', 'missTurnBtn', 'undoCricketBtn', 'cricketTurnLabel', 'dartDots',
   'x01Board', 'x01Players', 'checkoutHint', 'x01Pad', 'x01Display', 'x01Keypad', 'checkoutConfirm', 'checkoutYes', 'checkoutNo',
   'x01Submit', 'undoX01Btn', 'throwLog',
   'x01EntryModeSeg', 'x01TotalMode', 'x01DartMode', 'dartSlots', 'x01MultChips', 'x01DartGrid',

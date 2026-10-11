@@ -324,6 +324,8 @@ tr.stats-row th{text-align:left; padding-left:12px;}
 .num-btn:hover:not(:disabled){border-color:var(--gold); background:var(--gold-soft);}
 .num-btn:disabled{opacity:.35; cursor:not-allowed;}
 .pad-actions{display:flex; gap:10px;}
+.miss-row{display:flex; gap:8px;}
+.miss-btn{flex:1; padding:14px 0; font-size:1.15rem; font-weight:700; letter-spacing:.03em;}
 .turn-status{font-size:.9rem; color:var(--ink-soft); display:flex; align-items:center; gap:10px;}
 .dart-dots{display:flex; gap:5px;}
 .dart-dot{width:9px; height:9px; border-radius:50%; background:var(--rule);}

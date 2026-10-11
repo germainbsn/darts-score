@@ -84,6 +84,7 @@ function renderCricket(game) {
   }).join('');
   els.numGrid.innerHTML = numHtml;
   els.missBtn.disabled = padDisabled;
+  els.missTurnBtn.disabled = padDisabled;
   els.undoCricketBtn.disabled = (game.log || []).length === 0 || isBotTurn;
 
   Array.prototype.forEach.call(els.multChips.querySelectorAll('.chip'), function (c) {
@@ -153,12 +154,17 @@ async function applyCricketDart(number) {
     finishedAt: newSt.finished ? nowTs() : null
   });
 }
-async function applyCricketMiss() {
+// count: how many misses to log at once — omitted = 1, 'turn' = every dart
+// left in the current turn (the "Tour raté" button).
+async function applyCricketMiss(count) {
   if (!activeGame) return;
   var st = computeCricketState(activeGame);
   if (st.finished) return;
+  var n = count === 'turn' ? 3 - st.dartInTurn : 1;
   playMiss();
-  var newLog = (activeGame.log || []).concat([{ player: st.currentPlayer, number: 0, mult: 0 }]);
+  var misses = [];
+  for (var i = 0; i < n; i++) { misses.push({ player: st.currentPlayer, number: 0, mult: 0 }); }
+  var newLog = (activeGame.log || []).concat(misses);
   await Store.updateGame(activeGame.id, { log: newLog });
 }
 async function undoCricket() {
@@ -183,5 +189,6 @@ els.numGrid.addEventListener('click', function (e) {
   if (!b || b.disabled) return;
   applyCricketDart(parseInt(b.dataset.num, 10));
 });
-els.missBtn.addEventListener('click', applyCricketMiss);
+els.missBtn.addEventListener('click', function () { applyCricketMiss(); });
+els.missTurnBtn.addEventListener('click', function () { applyCricketMiss('turn'); });
 els.undoCricketBtn.addEventListener('click', undoCricket);
