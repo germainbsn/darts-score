@@ -371,6 +371,24 @@ button.history-item:hover{border-color:var(--gold);}
 #statsPlayerDetail .field{margin-bottom:0;}
 .stats-summary{display:flex; gap:16px; flex-wrap:wrap;}
 .stats-meta{margin:0; font-size:.85rem; color:var(--ink-soft);}
+.player-card{
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:center; gap:12px; width:100%; text-align:left;
+  border:1px solid var(--rule); background:var(--surface); color:var(--ink); border-radius:18px; padding:12px 12px 12px 14px; cursor:pointer;
+  transition:border-color .15s ease, background-color .15s ease;
+}
+.player-card:hover{border-color:var(--gold); background:var(--gold-soft);}
+.pc-av{width:44px; height:44px; border-radius:50%; background:var(--gold); color:#211a08; display:inline-flex; align-items:center; justify-content:center; font-family:"Fraunces",serif; font-weight:900; font-size:1.25rem;}
+.pc-main{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.pc-main b{font-family:"Fraunces",serif; font-weight:700; font-size:1.12rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.pc-meta{font-size:.74rem; color:var(--ink-soft);}
+.pc-modes{display:flex; gap:4px; margin-top:3px;}
+.pc-modes .mode-logo{width:20px; height:20px;}
+.pc-figure{display:flex; flex-direction:column; align-items:flex-end; text-align:right;}
+.pc-figure b{font-family:"Fraunces",serif; font-weight:900; font-size:1.3rem; line-height:1; font-variant-numeric:tabular-nums lining-nums;}
+.pc-figure span{font-size:.62rem; color:var(--ink-soft); font-weight:600; white-space:nowrap;}
+.pc-chev{color:var(--ink-soft); font-family:"Fraunces",serif; font-weight:700; font-size:1.4rem;}
+#statsPlayerList{display:flex; flex-direction:column; gap:10px;}
+@media (max-width:380px){ .pc-figure span{display:none;} }
 .stats-mode-cards{display:flex; flex-direction:column; gap:10px;}
 .stats-mode-card{
   display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:4px 12px; align-items:center; width:100%; text-align:left;

@@ -1189,15 +1189,44 @@ els.statsTopList.addEventListener('click', function (e) {
   openGameFromList(b.dataset.gameId);
 });
 
+// "aujourd'hui" / "hier" / "il y a 3 j" / a date, for when someone last played
+function relativeDay(ts) {
+  if (!ts) return '';
+  var d = new Date(ts), now = new Date();
+  var days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  if (days <= 0) return 'aujourd\'hui';
+  if (days === 1) return 'hier';
+  if (days < 7) return 'il y a ' + days + ' j';
+  return 'le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+// One card per player, most recently active first: initial, games played,
+// when they last played, the modes they play (mini-boards) and their key
+// figure over the last 10 games of the mode they play the most.
 function renderStatsPlayerList() {
   var names = uniquePlayerNames();
   if (!names.length) {
     els.statsPlayerList.innerHTML = '<p class="history-empty">Aucune partie terminée pour l\'instant.</p>';
     return;
   }
-  els.statsPlayerList.innerHTML = names.map(function (name) {
-    return '<button type="button" class="history-item" data-player="' + escapeHtml(name) + '">'
-      + '<span class="hi-players">' + escapeHtml(name) + '</span><span class="chev">›</span></button>';
+  var players = names.map(function (name) {
+    var games = historyGames.filter(function (g) { return g.players.indexOf(name) !== -1; })
+      .sort(function (a, b) { return (b.finishedAt || 0) - (a.finishedAt || 0); });
+    var modes = STATS_MODES.map(function (m) { return { mode: m, games: games.filter(m.test) }; }).filter(function (x) { return x.games.length; });
+    var top = modes.slice().sort(function (a, b) { return b.games.length - a.games.length; })[0];
+    var figure = '';
+    if (top) {
+      var kind = top.mode.id === 'score' ? 'x01' : statsFigureKind(top.mode.filter);
+      figure = '<b>' + formatStatsFigure(kind, statsFigure(kind, top.games.slice(0, 10), name)) + '</b><span>' + top.mode.label + ' · ' + STATS_FIGURE_LABELS[kind] + '</span>';
+    }
+    return { name: name, games: games, modes: modes, figure: figure, last: games.length ? games[0].finishedAt || 0 : 0 };
+  }).sort(function (a, b) { return b.last - a.last || a.name.localeCompare(b.name, 'fr'); });
+  els.statsPlayerList.innerHTML = players.map(function (p) {
+    return '<button type="button" class="player-card" data-player="' + escapeHtml(p.name) + '">'
+      + '<span class="pc-av">' + escapeHtml(p.name.charAt(0).toUpperCase()) + '</span>'
+      + '<span class="pc-main"><b>' + escapeHtml(p.name) + '</b>'
+      + '<span class="pc-meta">' + p.games.length + (p.games.length > 1 ? ' parties' : ' partie') + (p.last ? ' · ' + relativeDay(p.last) : '') + '</span>'
+      + '<span class="pc-modes">' + p.modes.map(function (x) { return '<span class="mode-logo" title="' + x.mode.label + '">' + modeLogoSvg(x.mode.id) + '</span>'; }).join('') + '</span></span>'
+      + '<span class="pc-figure">' + p.figure + '</span><span class="pc-chev" aria-hidden="true">›</span></button>';
   }).join('');
 }
 function renderStatsDetail() {
