@@ -44,30 +44,82 @@ function computeClockState(game) {
 }
 
 // ---------- rendering ----------
+// A real dartboard with the zone to hit lit in gold: the whole number when
+// any hit counts, only the double or treble ring when those are required,
+// and the outer bull / bullseye / both for the finish (per finishMode).
+var CLOCK_RING = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+function clockArc(r1, r2, a1, a2) {
+  function p(r, a) { return (r * Math.sin(a)).toFixed(2) + ' ' + (-r * Math.cos(a)).toFixed(2); }
+  return 'M' + p(r2, a1) + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + p(r2, a2) + ' L' + p(r1, a2) + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + p(r1, a1) + 'Z';
+}
+function clockBoardSvg(game, target) {
+  var seg = Math.PI * 2 / 20, mult = game.clockMultiplier || 'any', isFinish = target > 20, out = '';
+  out += '<defs><filter id="clockGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  out += '<circle r="122" fill="var(--board)"/>';
+  CLOCK_RING.forEach(function (n, i) {
+    var a1 = i * seg - seg / 2, a2 = a1 + seg, dark = i % 2 === 0;
+    var single = dark ? 'var(--board)' : 'var(--seg-light)', ring = dark ? 'var(--red)' : 'var(--green)';
+    var isTarget = !isFinish && n === target;
+    var cls = function (part) {
+      if (isTarget && (mult === 'any' || (mult === 'double' && part === 'd') || (mult === 'triple' && part === 't'))) return ' class="lit"';
+      return isTarget ? '' : ' class="dim"';
+    };
+    out += '<path d="' + clockArc(16, 57, a1, a2) + '" fill="' + single + '"' + cls('s') + '/>'
+      + '<path d="' + clockArc(57, 63, a1, a2) + '" fill="' + ring + '"' + cls('t') + '/>'
+      + '<path d="' + clockArc(63, 94, a1, a2) + '" fill="' + single + '"' + cls('s') + '/>'
+      + '<path d="' + clockArc(94, 100, a1, a2) + '" fill="' + ring + '"' + cls('d') + '/>';
+    var x = (112 * Math.sin(i * seg)).toFixed(1), y = (-112 * Math.cos(i * seg) + 5).toFixed(1);
+    out += '<text class="board-num' + (isTarget ? ' t' : '') + '" x="' + x + '" y="' + y + '" text-anchor="middle">' + n + '</text>';
+  });
+  var outerLit = isFinish && game.finishMode !== 'bull', innerLit = isFinish && game.finishMode !== 'outer';
+  out += '<circle r="16" fill="var(--green)" class="' + (outerLit ? 'lit' : 'dim') + '"/>'
+    + '<circle r="6.4" fill="var(--red)" class="' + (innerLit ? 'lit' : 'dim') + '"/>';
+  return '<svg class="clock-board" viewBox="-126 -126 252 252" role="img" aria-label="Cible : viser ' + clockTargetLabel(target, game) + '">' + out + '</svg>';
+}
+function clockPlayerTarget(game, st, pi) {
+  return st.hits[pi] >= 21 ? '✓' : clockTargetLabel(clockTargetAt(game, st.hits[pi]), game);
+}
+// Tabs are built once per game and then only updated, so the thrower's tab
+// slides into the slate instead of the whole row being redrawn.
+var clockTabsKey = null;
 function renderClock(game) {
   var st = computeClockState(game);
   els.clockPad.hidden = st.finished;
-  var html = '';
-  game.players.forEach(function (name, pi) {
-    var label = st.hits[pi] >= 21 ? '✓' : clockTargetLabel(clockTargetAt(game, st.hits[pi]), game);
-    // live-only success rate (hits / darts thrown) — not tracked in Stats/Classement
-    var rate = st.darts[pi] ? (st.hits[pi] / st.darts[pi] * 100) : 0;
-    html += '<div class="x01-card ' + (pi === st.currentPlayer && !st.finished ? 'cur' : '') + '">'
-      + '<div class="name">' + escapeHtml(name) + '</div>'
-      + '<div class="score-row">'
-      + '<div class="remaining' + (label.length > 3 ? ' tight' : '') + '">' + label + '</div>'
-      + '<div class="stats"><div>' + st.darts[pi] + ' flé</div><div>' + rate.toFixed(2) + ' %</div></div>'
-      + '</div>'
-      + '</div>';
+  var key = game.id + '|' + game.players.join('|');
+  if (key !== clockTabsKey) {
+    els.clockPlayers.innerHTML = game.players.map(function (name, pi) {
+      return '<div class="clock-tab" data-pi="' + pi + '"><span class="clock-tab-name">' + escapeHtml(name) + '</span><b class="clock-tab-target"></b></div>';
+    }).join('');
+    clockTabsKey = key;
+  }
+  Array.prototype.forEach.call(els.clockPlayers.children, function (tab, pi) {
+    tab.classList.toggle('cur', pi === st.currentPlayer && !st.finished);
+    tab.classList.toggle('winner', st.winnerIndex === pi);
+    tab.querySelector('.clock-tab-target').textContent = clockPlayerTarget(game, st, pi);
   });
-  els.clockPlayers.innerHTML = html;
   focusCurrentPlayerCard(els.clockPlayers, game.id, st.currentPlayer, st.finished);
 
+  var cp = st.currentPlayer;
+  var target = clockTargetAt(game, Math.min(st.hits[cp], 20));
+  var label = clockTargetLabel(target, game);
+  if (st.finished) {
+    els.clockTurnLabel.innerHTML = '<small>Partie terminée</small>';
+  } else {
+    els.clockTurnLabel.innerHTML = '<small>' + escapeHtml(game.players[cp]) + ' vise</small><b>' + label + '</b>';
+  }
+  els.clockTargetBoard.innerHTML = clockBoardSvg(game, st.finished ? 0 : target);
+
+  // stats of everyone: next target, hits out of 21, live success rate, darts
+  var rows = game.players.map(function (name, pi) {
+    var rate = st.darts[pi] ? Math.round(st.hits[pi] / st.darts[pi] * 100) : 0;
+    return '<tr class="' + (pi === cp && !st.finished ? 'cur' : '') + '"><td>' + escapeHtml(name) + '</td><td class="aim">' + clockPlayerTarget(game, st, pi) + '</td>'
+      + '<td>' + Math.min(st.hits[pi], 21) + '/21</td><td>' + rate + '&nbsp;%</td><td>' + st.darts[pi] + '</td></tr>';
+  }).join('');
+  els.clockStats.innerHTML = '<thead><tr><th>Joueur</th><th>Cible</th><th>Faits</th><th>Réussite</th><th>Flé</th></tr></thead><tbody>' + rows + '</tbody>';
+
   // Locked while the bot is mid-turn, same reasoning as Cricket's dart pad.
-  var isBotTurn = botIndex(game) === st.currentPlayer;
-  var label = clockTargetLabel(clockTargetAt(game, st.hits[st.currentPlayer]), game);
-  els.clockHitBtn.textContent = label;
-  els.clockHitBtn.classList.toggle('tight', label.length > 3);
+  var isBotTurn = botIndex(game) === cp;
+  els.clockHitBtn.innerHTML = 'Touché <b>' + label + '</b>';
   els.clockHitBtn.disabled = st.finished || isBotTurn;
   var dartsLeftInTurn = 3 - st.dartInTurn;
   els.clockMissBtn.disabled = st.finished || isBotTurn;
@@ -75,9 +127,6 @@ function renderClock(game) {
   els.clockMiss3Btn.disabled = st.finished || isBotTurn || dartsLeftInTurn < 3;
   els.undoClockBtn.disabled = (game.log || []).length === 0 || isBotTurn;
 
-  els.clockTurnLabel.textContent = st.finished
-    ? 'Partie terminée'
-    : (game.players[st.currentPlayer] + ' — fléchette ' + (st.dartInTurn + 1) + '/3 — cible : ' + label);
   // this turn's already-thrown darts are simply the last dartInTurn log
   // entries (one shared sequential log, 3 per player like Cricket) — color
   // each dot by whether that dart actually hit or missed.

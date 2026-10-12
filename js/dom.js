@@ -33,7 +33,7 @@ var els = {};
   'rankingStat', 'rankingList', 'rankingX01Field', 'rankingX01Filter', 'rankingRoundsField', 'rankingRoundsFilter', 'rankingClockField', 'rankingClockFilter',
   'roundsField', 'roundsCount', 'roundsMinus', 'roundsPlus', 'soundToggle', 'voiceBtn', 'menuBtn', 'topbarWhere', 'drawer', 'drawerScrim', 'drawerSoundBtn',
   'voiceBackBtn', 'voiceProgress', 'voiceCurrent', 'voiceStatus', 'voiceRecBtn', 'voicePlayBtn', 'voicePrevBtn', 'voiceNextBtn', 'voiceDeleteBtn', 'voiceGrid',
-  'clockFinishField', 'clockFinishSeg', 'clockMultiplierField', 'clockMultiplierSeg', 'clockOrderField', 'clockOrderSeg', 'clockBoard', 'clockPlayers', 'clockPad', 'clockHitBtn', 'clockMissBtn', 'clockMiss2Btn', 'clockMiss3Btn', 'undoClockBtn', 'clockTurnLabel', 'clockDartDots'
+  'clockFinishField', 'clockFinishSeg', 'clockMultiplierField', 'clockMultiplierSeg', 'clockOrderField', 'clockOrderSeg', 'clockBoard', 'clockPlayers', 'clockPad', 'clockHitBtn', 'clockMissBtn', 'clockMiss2Btn', 'clockMiss3Btn', 'undoClockBtn', 'clockTurnLabel', 'clockDartDots', 'clockTargetBoard', 'clockStats'
 ].forEach(function (id) {
   els[id] = document.getElementById(id);
 });
@@ -44,14 +44,14 @@ els.viewRanking = document.getElementById('view-ranking');
 els.viewPlay = document.getElementById('view-play');
 els.viewVoice = document.getElementById('view-voice');
 
-// Scrolls the current player's card into the middle of a horizontally
-// scrolling .x01-players row — but only once per turn (tracked via a data
+// Scrolls the current player's tab/card into the middle of a horizontally
+// scrolling row of players — but only once per turn (tracked via a data
 // attribute on the container) so it doesn't fight a player manually scrolling
 // to check someone else's card while their own turn is still live.
 function focusCurrentPlayerCard(container, gameId, currentIndex, finished) {
   var key = gameId + ':' + (finished ? 'done' : currentIndex);
   if (container.dataset.focusKey === key) return;
   container.dataset.focusKey = key;
-  var cur = container.querySelector('.x01-card.cur') || container.lastElementChild;
+  var cur = container.querySelector('.cur') || container.lastElementChild;
   if (cur && cur.scrollIntoView) cur.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }

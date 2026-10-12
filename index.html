@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- bumped by scripts/bump-version.sh (pre-commit hook): busts the browser cache of css/js -->
-<meta name="app-version" content="20261012132922">
+<meta name="app-version" content="20261012134957">
 <title>Triple Vingt</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Mono:wght@400;700&family=Karla:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261012132922">
+<link rel="stylesheet" href="css/style.css?v=20261012134957">
 </head>
 <body>
 
@@ -545,21 +545,22 @@
     </div>
 
     <div id="clockBoard" hidden>
-      <div class="x01-players" id="clockPlayers"></div>
-      <div class="dart-pad" id="clockPad">
-        <div class="clock-actions">
-          <button type="button" class="btn clock-target-btn" id="clockHitBtn">1</button>
-          <button type="button" class="ghost danger clock-miss-btn" id="clockMissBtn">✕</button>
-          <button type="button" class="ghost danger clock-miss-btn" id="clockMiss2Btn">✕✕</button>
-          <button type="button" class="ghost danger clock-miss-btn" id="clockMiss3Btn">✕✕✕</button>
+      <!-- one tab per player (fixed order) showing the number they must hit; the thrower's tab merges into the slate -->
+      <div class="clock-tabs" id="clockPlayers"></div>
+      <div class="clock-slate">
+        <div class="clock-aim" id="clockTurnLabel"></div>
+        <div class="clock-target" id="clockTargetBoard"></div>
+        <span class="dart-dots" id="clockDartDots"></span>
+      </div>
+      <table class="clock-stats" id="clockStats"></table>
+      <div class="dart-pad clock-pad" id="clockPad">
+        <button type="button" class="clock-hit" id="clockHitBtn">Touché</button>
+        <div class="clock-misses">
+          <button type="button" id="clockMissBtn">Raté</button>
+          <button type="button" id="clockMiss2Btn">2 ratés</button>
+          <button type="button" id="clockMiss3Btn">3 ratés</button>
         </div>
-        <div class="pad-actions">
-          <button class="ghost" id="undoClockBtn" type="button">Annuler la dernière fléchette</button>
-        </div>
-        <div class="turn-status">
-          <span id="clockTurnLabel"></span>
-          <span class="dart-dots" id="clockDartDots"></span>
-        </div>
+        <button class="link-btn" id="undoClockBtn" type="button">Annuler la dernière fléchette</button>
       </div>
     </div>
 
@@ -569,16 +570,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="js/constants.js?v=20261012132922"></script>
-<script src="js/dom.js?v=20261012132922"></script>
-<script src="js/state.js?v=20261012132922"></script>
-<script src="js/sound.js?v=20261012132922"></script>
-<script src="js/store.js?v=20261012132922"></script>
-<script src="js/cricket.js?v=20261012132922"></script>
-<script src="js/x01.js?v=20261012132922"></script>
-<script src="js/clock.js?v=20261012132922"></script>
-<script src="js/bot.js?v=20261012132922"></script>
-<script src="js/voice.js?v=20261012132922"></script>
-<script src="js/app.js?v=20261012132922"></script>
+<script src="js/constants.js?v=20261012134957"></script>
+<script src="js/dom.js?v=20261012134957"></script>
+<script src="js/state.js?v=20261012134957"></script>
+<script src="js/sound.js?v=20261012134957"></script>
+<script src="js/store.js?v=20261012134957"></script>
+<script src="js/cricket.js?v=20261012134957"></script>
+<script src="js/x01.js?v=20261012134957"></script>
+<script src="js/clock.js?v=20261012134957"></script>
+<script src="js/bot.js?v=20261012134957"></script>
+<script src="js/voice.js?v=20261012134957"></script>
+<script src="js/app.js?v=20261012134957"></script>
 </body>
 </html>

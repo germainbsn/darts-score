@@ -14,6 +14,7 @@
   --gold-soft:#e9d9a8;
   --board:#2b241c;
   --cream:#f3ead9;
+  --seg-light:#e8dcc0;
   --white:#fff;
   --danger:#a8434a;
   --shadow:rgba(43,36,28,.14);
@@ -42,6 +43,7 @@
     --gold-soft:#3d3116;
     --board:#0f1a14;
     --cream:#f2ede2;
+    --seg-light:#d9cfb6;
     --danger:#d1636b;
     --shadow:rgba(0,0,0,.35);
     --focus:#c9a15a;
@@ -69,6 +71,7 @@
   --gold-soft:#3d3116;
   --board:#0f1a14;
   --cream:#f2ede2;
+  --seg-light:#d9cfb6;
   --danger:#d1636b;
   --shadow:rgba(0,0,0,.35);
   --focus:#c9a15a;
@@ -424,10 +427,54 @@ td.mark-cell.cur{background:var(--gold-soft);}
 .mark{width:26px; height:26px; margin:0 auto; display:block; stroke:var(--ink-soft); stroke-width:2.4; stroke-linecap:round; fill:none;}
 td.mark-cell.closed .mark{stroke:var(--gold-ink); stroke-width:2.6;}
 td.mark-cell.closed{color:var(--gold-ink); font-weight:700; font-size:1.1rem;}
-.clock-actions{display:flex; gap:8px; flex-wrap:wrap;}
-.clock-target-btn{flex:2 1 120px; padding:18px 0; font-size:1.6rem;}
-.clock-target-btn.tight{font-size:1.05rem;}
-.clock-miss-btn{flex:1 1 60px; font-size:1.1rem; letter-spacing:.05em;}
+/* ---------- Horloge: player tabs on a slate with the lit dartboard ---------- */
+.clock-tabs{display:flex; gap:4px; overflow-x:auto; scrollbar-width:none;}
+.clock-tabs::-webkit-scrollbar{display:none;}
+.clock-tab{
+  flex:1 0 74px; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px;
+  padding:6px 8px 8px; border-radius:12px 12px 0 0; background:var(--surface-2); color:var(--ink-soft);
+  transition:background-color .35s ease, color .35s ease;
+}
+.clock-tab-name{max-width:100%; font-size:.74rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.clock-tab-target{font-family:"Fraunces",serif; font-weight:900; font-size:1.15rem; color:var(--ink); line-height:1.1;}
+.clock-tab.cur{background:var(--board); color:var(--gold);}
+.clock-tab.cur .clock-tab-target{color:var(--gold);}
+.clock-tab.winner .clock-tab-target{color:var(--green);}
+.clock-slate{
+  background:var(--board); color:var(--cream); border-radius:0 0 20px 20px; padding:12px 16px 14px;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.clock-aim{display:flex; align-items:baseline; gap:10px; min-height:2.2rem;}
+.clock-aim small{font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:color-mix(in srgb, var(--cream) 60%, transparent);}
+.clock-aim b{font-family:"Fraunces",serif; font-weight:900; font-size:2.1rem; line-height:1; color:var(--gold);}
+.clock-target{width:min(250px, 72vw);}
+.clock-board{display:block; width:100%; height:auto;}
+.clock-board .board-num{font-family:"Fraunces",serif; font-weight:700; font-size:15px; fill:color-mix(in srgb, var(--cream) 60%, transparent);}
+.clock-board .board-num.t{fill:var(--gold); font-size:22px; font-weight:900;}
+.clock-board .lit{fill:var(--gold); filter:url(#clockGlow); animation:board-pulse 1.6s ease-in-out infinite;}
+.clock-board .dim{opacity:.5;}
+@keyframes board-pulse{50%{opacity:.72;}}
+.clock-slate .dart-dots .dart-dot{width:11px; height:11px; background:color-mix(in srgb, var(--cream) 18%, transparent);}
+.clock-slate .dart-dots .dart-dot.hit{background:var(--green);}
+.clock-slate .dart-dots .dart-dot.miss{background:var(--red);}
+.clock-stats{width:100%; border-collapse:collapse; font-size:.86rem; margin-top:4px;}
+.clock-stats th{font-size:.64rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); font-weight:700; text-align:right; padding:0 6px 4px;}
+.clock-stats td{padding:7px 6px; border-top:1px solid var(--rule); text-align:right; font-family:"Space Mono",monospace;}
+.clock-stats th:first-child, .clock-stats td:first-child{text-align:left;}
+.clock-stats td:first-child{font-family:"Karla",system-ui,sans-serif; font-weight:700;}
+.clock-stats td.aim{color:var(--gold-ink); font-weight:700;}
+.clock-stats tr.cur td{color:var(--gold-ink);}
+.clock-stats tr.cur td:first-child::before{content:"● "; color:var(--gold);}
+.dart-pad.clock-pad{background:transparent; border:none; padding:6px 0 0; gap:8px;}
+.clock-hit{
+  height:58px; border:none; border-radius:999px; background:var(--gold); color:#211a08; cursor:pointer;
+  font-weight:800; font-size:1.05rem; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.clock-hit b{font-family:"Fraunces",serif; font-size:1.45rem;}
+.clock-hit:disabled{opacity:.4; cursor:not-allowed;}
+.clock-misses{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
+.clock-misses button{height:42px; border:none; border-radius:999px; background:var(--red-soft); color:var(--danger); font-weight:700; font-size:.88rem; cursor:pointer;}
+.clock-misses button:disabled{opacity:.35; cursor:not-allowed;}
 tr.score-row th, tr.score-row td{border-bottom:none; border-top:2px solid var(--rule); font-family:"Space Mono"; font-weight:700; font-size:1.05rem;}
 tr.score-row td.winner{color:var(--green);}
 tr.stats-row th, tr.stats-row td{border-bottom:none; border-top:1px dashed var(--rule); font-family:"Space Mono"; font-weight:600; font-size:.85rem; color:var(--ink-soft); padding-top:6px;}
