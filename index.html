@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- bumped by scripts/bump-version.sh (pre-commit hook): busts the browser cache of css/js -->
-<meta name="app-version" content="20261012221258">
+<meta name="app-version" content="20261012223233">
 <title>Triple Vingt</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Mono:wght@400;700&family=Karla:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261012221258">
+<link rel="stylesheet" href="css/style.css?v=20261012223233">
 </head>
 <body>
 
@@ -219,31 +219,23 @@
           <button class="ghost small" id="deletePlayerNo" type="button">Annuler</button>
         </span>
       </div>
-      <div class="field">
-        <label>Filtrer par mode</label>
-        <select id="statsFilterType">
-          <option value="all">Toutes les parties</option>
-          <option value="cricket">Cricket</option>
-          <option value="301">301 — Toutes sorties</option>
-          <option value="301-double">301 — Double sortie</option>
-          <option value="301-simple">301 — Sortie simple</option>
-          <option value="501">501 — Toutes sorties</option>
-          <option value="501-double">501 — Double sortie</option>
-          <option value="501-simple">501 — Sortie simple</option>
-          <option value="score">Score</option>
-          <option value="clock-any">Horloge — Simple</option>
-          <option value="clock-double">Horloge — Doubles</option>
-          <option value="clock-triple">Horloge — Triples</option>
-        </select>
+      <!-- summary: one card per mode played, figures over the last 10 games -->
+      <div id="statsSummary">
+        <p class="stats-meta" id="statsMeta"></p>
+        <div class="stats-mode-cards" id="statsModeCards"></div>
       </div>
+      <!-- one mode's detail (opened from its card) -->
+      <div id="statsModeView" hidden>
+        <div class="stats-mode-head"><span class="mode-logo" id="statsModeLogo"></span><h3 id="statsModeTitle"></h3></div>
+        <div class="stats-sub" id="statsSubPills"></div>
       <div class="stats-summary">
         <div class="panel">
           <div class="stat-total" id="statsGamesPlayed">0</div>
           <div class="stat-total-label">parties jouées</div>
         </div>
-        <div class="panel">
-          <div class="stat-total" id="statsWinPct">0%</div>
-          <div class="stat-total-label">victoires</div>
+        <div class="panel" id="statsRecentTile">
+          <div class="stat-total" id="statsRecentValue">—</div>
+          <div class="stat-total-label" id="statsRecentLabel">10 dernières parties</div>
         </div>
         <div class="panel" id="statsThirdTile" hidden>
           <div class="stat-total" id="statsThirdValue">0.0</div>
@@ -369,6 +361,7 @@
           <button type="button" data-sort="desc">Taux décroissant</button>
         </div>
         <div class="stat-tiles" id="clockNumberStatsList"></div>
+      </div>
       </div>
     </div>
   </section>
@@ -569,16 +562,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="js/constants.js?v=20261012221258"></script>
-<script src="js/dom.js?v=20261012221258"></script>
-<script src="js/state.js?v=20261012221258"></script>
-<script src="js/sound.js?v=20261012221258"></script>
-<script src="js/store.js?v=20261012221258"></script>
-<script src="js/cricket.js?v=20261012221258"></script>
-<script src="js/x01.js?v=20261012221258"></script>
-<script src="js/clock.js?v=20261012221258"></script>
-<script src="js/bot.js?v=20261012221258"></script>
-<script src="js/voice.js?v=20261012221258"></script>
-<script src="js/app.js?v=20261012221258"></script>
+<script src="js/constants.js?v=20261012223233"></script>
+<script src="js/dom.js?v=20261012223233"></script>
+<script src="js/state.js?v=20261012223233"></script>
+<script src="js/sound.js?v=20261012223233"></script>
+<script src="js/store.js?v=20261012223233"></script>
+<script src="js/cricket.js?v=20261012223233"></script>
+<script src="js/x01.js?v=20261012223233"></script>
+<script src="js/clock.js?v=20261012223233"></script>
+<script src="js/bot.js?v=20261012223233"></script>
+<script src="js/voice.js?v=20261012223233"></script>
+<script src="js/app.js?v=20261012223233"></script>
 </body>
 </html>

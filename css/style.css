@@ -370,6 +370,31 @@ button.history-item:hover{border-color:var(--gold);}
 #statsPlayerListWrap, #statsPlayerDetail{display:flex; flex-direction:column; gap:16px;}
 #statsPlayerDetail .field{margin-bottom:0;}
 .stats-summary{display:flex; gap:16px; flex-wrap:wrap;}
+.stats-meta{margin:0; font-size:.85rem; color:var(--ink-soft);}
+.stats-mode-cards{display:flex; flex-direction:column; gap:10px;}
+.stats-mode-card{
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:4px 12px; align-items:center; width:100%; text-align:left;
+  border:1px solid var(--rule); background:var(--surface); color:var(--ink); border-radius:18px; padding:12px 14px; cursor:pointer;
+  transition:border-color .15s ease, background-color .15s ease;
+}
+.stats-mode-card:hover{border-color:var(--gold); background:var(--gold-soft);}
+.stats-mode-card .mode-logo{width:46px; height:46px;}
+.smc-name{display:flex; flex-direction:column; min-width:0;}
+.smc-name b{font-family:"Fraunces",serif; font-weight:700; font-size:1.1rem;}
+.smc-name span{font-size:.74rem; color:var(--ink-soft);}
+.smc-value{display:flex; flex-direction:column; align-items:flex-end; text-align:right;}
+.smc-value b{font-family:"Fraunces",serif; font-weight:900; font-size:1.6rem; line-height:1; font-variant-numeric:tabular-nums lining-nums;}
+.smc-value span{font-size:.66rem; color:var(--ink-soft); font-weight:600; white-space:nowrap;}
+.stats-spark{grid-column:1 / -1; width:100%; height:26px; margin-top:4px;}
+.stats-spark polyline{fill:none; stroke:var(--gold); stroke-width:2; vector-effect:non-scaling-stroke; stroke-linejoin:round; stroke-linecap:round;}
+.stats-mode-head{display:flex; align-items:center; gap:12px;}
+.stats-mode-head .mode-logo{width:48px; height:48px;}
+.stats-mode-head h3{margin:0; font-family:"Fraunces",serif; font-size:1.5rem;}
+.stats-sub{display:flex; gap:3px; align-self:flex-start; padding:3px; border-radius:999px; background:var(--surface-2); flex-wrap:wrap;}
+.stats-sub button{border:none; background:transparent; border-radius:999px; padding:5px 12px; font-size:.78rem; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+.stats-sub button.active{background:var(--surface); color:var(--ink); box-shadow:0 1px 2px var(--shadow);}
+#statsSummary, #statsModeView{display:flex; flex-direction:column; gap:16px;}
+#statsSummary[hidden], #statsModeView[hidden]{display:none;}
 .stats-summary .panel{flex:1 1 160px; text-align:center;}
 .stats-summary.milestones{gap:10px;}
 .bot-record-list{display:flex; flex-direction:column;}

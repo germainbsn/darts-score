@@ -1200,7 +1200,17 @@ function renderStatsDetail() {
   var st = statsForPlayer(statsSelectedPlayer, statsFilterType);
   els.statsPlayerName.textContent = statsSelectedPlayer;
   els.statsGamesPlayed.textContent = st.played;
-  els.statsWinPct.textContent = st.pct + '%';
+  // the same key figure, over the 10 most recent games of this filter only
+  var kind = statsFigureKind(statsFilterType);
+  if (kind) {
+    var recent = statsGamesFor(statsSelectedPlayer, statsFilterType)
+      .sort(function (a, b) { return (b.finishedAt || 0) - (a.finishedAt || 0); }).slice(0, 10);
+    els.statsRecentTile.hidden = !recent.length;
+    els.statsRecentValue.textContent = formatStatsFigure(kind, statsFigure(kind, recent, statsSelectedPlayer));
+    els.statsRecentLabel.textContent = STATS_FIGURE_LABELS[kind] + ' · ' + (recent.length >= 10 ? '10' : recent.length) + ' dernières';
+  } else {
+    els.statsRecentTile.hidden = true;
+  }
   if (statsFilterType === 'cricket') {
     els.statsThirdTile.hidden = false;
     els.statsThirdLabel.textContent = 'MPR moyen';
@@ -1552,24 +1562,123 @@ els.clockNumberSortSeg.addEventListener('click', function (e) {
   renderClockNumberStats();
 });
 
+// ---------- stats tab: summary by mode ----------
+// A player's page opens on one card per mode they've played, each with its
+// key figure over the last 10 games (fewer until they've played 10) and a
+// sparkline of that figure game by game. Tapping a card opens that mode's
+// detail (the tiles, records, bots, top list and charts below), filtered to
+// that mode; 301/501 and Horloge add their own variant pills there.
+var STATS_MODES = [
+  { id: 'cricket', label: 'Cricket', filter: 'cricket', test: function (g) { return g.type === 'cricket'; } },
+  { id: '301', label: '301', filter: '301', test: function (g) { return g.type === 'x01' && g.variant === 301; },
+    subs: [['301', 'Toutes'], ['301-simple', 'Sortie simple'], ['301-double', 'Double sortie']] },
+  { id: '501', label: '501', filter: '501', test: function (g) { return g.type === 'x01' && g.variant === 501; },
+    subs: [['501', 'Toutes'], ['501-simple', 'Sortie simple'], ['501-double', 'Double sortie']] },
+  { id: 'clock', label: 'Horloge', filter: 'clock-any', test: function (g) { return g.type === 'clock'; },
+    subs: [['clock-any', 'Simple'], ['clock-double', 'Doubles'], ['clock-triple', 'Triples']] },
+  { id: 'score', label: 'Score', filter: 'score', test: function (g) { return g.type === 'score'; } }
+];
+var STATS_FIGURE_LABELS = { cricket: 'MPR', x01: 'moyenne 3 fl.', clock: 'réussite', score: 'points / partie' };
+var statsMode = null; // id of the mode whose detail is open, or null for the summary
+function statsFigureKind(filter) {
+  if (filter === 'cricket') return 'cricket';
+  if (isX01Filter(filter)) return 'x01';
+  if (isClockFilter(filter)) return 'clock';
+  if (filter === 'score') return 'score';
+  return null;
+}
+// one game's contribution to a mode's key figure, as num/den so several
+// games add up on real totals rather than averaging per-game averages
+function gameFigurePart(kind, g, pi) {
+  if (kind === 'cricket') { var cs = cricketDartStats(g)[pi]; return [cs.marks * 3, cs.darts]; }
+  if (kind === 'x01') { var xs = x01DartStats(g)[pi]; return [xs.scored * 3, xs.darts]; }
+  if (kind === 'clock') { var ks = computeClockState(g); return [Math.min(ks.hits[pi], 21) * 100, ks.darts[pi]]; }
+  return [computeX01State(g).totals[pi], 1];
+}
+function statsFigure(kind, games, name) {
+  var num = 0, den = 0;
+  games.forEach(function (g) { var part = gameFigurePart(kind, g, g.players.indexOf(name)); num += part[0]; den += part[1]; });
+  return den ? num / den : 0;
+}
+function formatStatsFigure(kind, v) {
+  if (kind === 'clock') return Math.round(v) + ' %';
+  if (kind === 'score') return String(Math.round(v));
+  return v.toFixed(1);
+}
+function sparklineSvg(values) {
+  if (values.length < 2) return '';
+  var min = Math.min.apply(null, values), max = Math.max.apply(null, values), span = (max - min) || 1;
+  var pts = values.map(function (v, i) { return (i * 100 / (values.length - 1)).toFixed(1) + ',' + (22 - 20 * (v - min) / span).toFixed(1); });
+  return '<svg class="stats-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '"/></svg>';
+}
+function renderStatsSummary() {
+  var name = statsSelectedPlayer;
+  var games = historyGames.filter(function (g) { return g.players.indexOf(name) !== -1; });
+  var oldest = games.reduce(function (m, g) { return g.finishedAt && (!m || g.finishedAt < m) ? g.finishedAt : m; }, null);
+  els.statsMeta.textContent = games.length + (games.length > 1 ? ' parties' : ' partie')
+    + (oldest ? ' depuis le ' + new Date(oldest).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : '');
+  var cards = STATS_MODES.map(function (mode) {
+    var kind = statsFigureKind(mode.filter);
+    var mg = games.filter(mode.test).sort(function (a, b) { return (b.finishedAt || 0) - (a.finishedAt || 0); });
+    if (!mg.length) return '';
+    var recent = mg.slice(0, 10);
+    var series = recent.slice().reverse().map(function (g) { return statsFigure(kind, [g], name); });
+    return '<button type="button" class="stats-mode-card" data-mode="' + mode.id + '">'
+      + '<span class="mode-logo">' + modeLogoSvg(mode.id) + '</span>'
+      + '<span class="smc-name"><b>' + mode.label + '</b><span>' + mg.length + (mg.length > 1 ? ' parties' : ' partie') + ' · global ' + formatStatsFigure(kind, statsFigure(kind, mg, name)) + '</span></span>'
+      + '<span class="smc-value"><b>' + formatStatsFigure(kind, statsFigure(kind, recent, name)) + '</b><span>' + STATS_FIGURE_LABELS[kind] + ' · ' + recent.length + ' dernières</span></span>'
+      + sparklineSvg(series) + '</button>';
+  }).join('');
+  els.statsModeCards.innerHTML = cards || '<p class="history-empty">Aucune partie terminée pour l\'instant.</p>';
+}
+function showStatsSummary() {
+  statsMode = null;
+  els.statsBackBtn.textContent = '← Joueurs';
+  els.statsSummary.hidden = false;
+  els.statsModeView.hidden = true;
+  els.statsPlayerName.textContent = statsSelectedPlayer;
+  renderStatsSummary();
+}
+function openStatsMode(id) {
+  var mode = STATS_MODES.filter(function (m) { return m.id === id; })[0];
+  if (!mode) return;
+  statsMode = id;
+  statsFilterType = mode.filter;
+  els.statsBackBtn.textContent = '← Résumé';
+  els.statsSummary.hidden = true;
+  els.statsModeView.hidden = false;
+  els.statsModeLogo.innerHTML = modeLogoSvg(mode.id);
+  els.statsModeTitle.textContent = mode.label;
+  renderStatsSubPills(mode);
+  renderStatsDetail();
+  window.scrollTo(0, 0);
+}
+function renderStatsSubPills(mode) {
+  els.statsSubPills.hidden = !mode.subs;
+  els.statsSubPills.innerHTML = (mode.subs || []).map(function (sub) {
+    return '<button type="button" data-filter="' + sub[0] + '" class="' + (sub[0] === statsFilterType ? 'active' : '') + '">' + sub[1] + '</button>';
+  }).join('');
+}
+
 function showStatsList() {
   statsSelectedPlayer = null;
+  statsMode = null;
   els.statsPlayerListWrap.hidden = false;
   els.statsPlayerDetail.hidden = true;
   renderStatsPlayerList();
 }
 function showStatsDetail(name) {
   statsSelectedPlayer = name;
-  statsFilterType = 'all';
-  els.statsFilterType.value = 'all';
   els.deletePlayerConfirm.hidden = true;
   els.statsPlayerListWrap.hidden = true;
   els.statsPlayerDetail.hidden = false;
-  renderStatsDetail();
+  showStatsSummary();
 }
 function refreshStatsView() {
   if (currentTab !== 'stats') return;
-  if (statsSelectedPlayer) renderStatsDetail(); else renderStatsPlayerList();
+  if (!statsSelectedPlayer) renderStatsPlayerList();
+  else if (statsMode) renderStatsDetail();
+  else renderStatsSummary();
 }
 
 els.statsPlayerList.addEventListener('click', function (e) {
@@ -1577,10 +1686,23 @@ els.statsPlayerList.addEventListener('click', function (e) {
   if (!b) return;
   showStatsDetail(b.dataset.player);
 });
-els.statsBackBtn.addEventListener('click', function () { playClick(); showStatsList(); });
-els.statsFilterType.addEventListener('change', function () {
-  statsFilterType = els.statsFilterType.value;
+els.statsModeCards.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-mode]');
+  if (!b) return;
+  playClick();
+  openStatsMode(b.dataset.mode);
+});
+els.statsSubPills.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-filter]');
+  if (!b) return;
+  playClick();
+  statsFilterType = b.dataset.filter;
+  Array.prototype.forEach.call(els.statsSubPills.children, function (x) { x.classList.toggle('active', x === b); });
   renderStatsDetail();
+});
+els.statsBackBtn.addEventListener('click', function () {
+  playClick();
+  if (statsMode) showStatsSummary(); else showStatsList();
 });
 
 // Deleting a player permanently erases every finished game they're in — since
