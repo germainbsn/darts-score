@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- bumped by scripts/bump-version.sh (pre-commit hook): busts the browser cache of css/js -->
-<meta name="app-version" content="20261011231354">
+<meta name="app-version" content="20261012132922">
 <title>Triple Vingt</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Mono:wght@400;700&family=Karla:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261011231354">
+<link rel="stylesheet" href="css/style.css?v=20261012132922">
 </head>
 <body>
 
@@ -505,32 +505,32 @@
         <button type="button" data-double="0">Sortie simple</button>
         <button type="button" data-double="1">Double sortie</button>
       </div>
-      <div class="x01-players" id="x01Players"></div>
-      <div class="notice checkout-hint" id="checkoutHint" hidden></div>
+      <!-- one row per player, fixed turn order; the thrower's row opens up (built once per game, then updated so it animates) -->
+      <div class="ring-list" id="x01Players"></div>
+      <!-- this turn's 3 darts; empty ones show the suggested finish -->
+      <div class="x01-slots" id="x01Slots"></div>
       <div class="x01-pad" id="x01Pad">
         <div class="entry-mode-toggle" id="x01EntryModeSeg">
           <button type="button" data-mode="total" class="active">Total sur 3</button>
           <button type="button" data-mode="darts">Fléchette par fléchette</button>
         </div>
         <div id="x01TotalMode">
-          <div class="keypad-row">
-            <div class="keypad-display mono" id="x01Display">0</div>
-          </div>
+          <div class="keypad-display mono" id="x01Display"></div>
           <div class="keypad" id="x01Keypad"></div>
         </div>
 
         <div id="x01DartMode" hidden>
-          <div class="dart-slots" id="dartSlots">
-            <div class="dart-slot"></div>
-            <div class="dart-slot"></div>
-            <div class="dart-slot"></div>
-          </div>
           <div class="mult-chips" id="x01MultChips">
             <button type="button" class="chip active" data-mult="1">Simple</button>
             <button type="button" class="chip" data-mult="2">Double</button>
             <button type="button" class="chip" data-mult="3">Triple</button>
           </div>
           <div class="x01-dart-grid" id="x01DartGrid"></div>
+          <div class="x01-acts">
+            <button type="button" class="x01-act miss" id="x01DartMissBtn">Raté</button>
+            <button type="button" class="x01-act" id="x01DartUndoBtn" aria-label="Effacer la dernière fléchette"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M9 6h11v12H9l-6-6z"/><path d="M13 10l4 4M17 10l-4 4"/></svg></button>
+            <button type="button" class="x01-act ok" id="x01Submit"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> Valider</button>
+          </div>
         </div>
 
         <div id="checkoutConfirm" class="confirm-panel" hidden>
@@ -540,10 +540,7 @@
             <button class="ghost small" id="checkoutNo" type="button">Non (raté)</button>
           </span>
         </div>
-        <div class="pad-actions">
-          <button class="btn" id="x01Submit" type="button">Valider le tour</button>
-          <button class="ghost" id="undoX01Btn" type="button">Annuler le dernier tour</button>
-        </div>
+        <button class="link-btn" id="undoX01Btn" type="button">Annuler le dernier tour</button>
       </div>
     </div>
 
@@ -572,16 +569,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-<script src="js/constants.js?v=20261011231354"></script>
-<script src="js/dom.js?v=20261011231354"></script>
-<script src="js/state.js?v=20261011231354"></script>
-<script src="js/sound.js?v=20261011231354"></script>
-<script src="js/store.js?v=20261011231354"></script>
-<script src="js/cricket.js?v=20261011231354"></script>
-<script src="js/x01.js?v=20261011231354"></script>
-<script src="js/clock.js?v=20261011231354"></script>
-<script src="js/bot.js?v=20261011231354"></script>
-<script src="js/voice.js?v=20261011231354"></script>
-<script src="js/app.js?v=20261011231354"></script>
+<script src="js/constants.js?v=20261012132922"></script>
+<script src="js/dom.js?v=20261012132922"></script>
+<script src="js/state.js?v=20261012132922"></script>
+<script src="js/sound.js?v=20261012132922"></script>
+<script src="js/store.js?v=20261012132922"></script>
+<script src="js/cricket.js?v=20261012132922"></script>
+<script src="js/x01.js?v=20261012132922"></script>
+<script src="js/clock.js?v=20261012132922"></script>
+<script src="js/bot.js?v=20261012132922"></script>
+<script src="js/voice.js?v=20261012132922"></script>
+<script src="js/app.js?v=20261012132922"></script>
 </body>
 </html>

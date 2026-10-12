@@ -81,11 +81,6 @@ function suggestCheckout(remaining, doubleOut, maxDarts) {
   }
   return null;
 }
-function checkoutHintText(remaining, doubleOut, maxDarts) {
-  var path = suggestCheckout(remaining, doubleOut, maxDarts);
-  if (!path) return null;
-  return '🎯 ' + path.join(' ');
-}
 
 // darts thrown & points scored (non-bust) per player — the basis for both
 // the card's compact stats line and the Stats tab's aggregate 3-dart average.
@@ -139,8 +134,7 @@ function dartEndsTurn() {
 // a click here, the bot, or another device through the snapshot). Detected
 // as the log growing by exactly one entry since the last render of this same
 // game, so opening or resuming a game, and undo, play nothing. The bubble
-// lives on #x01Board, outside the cards: the cards are rebuilt on every
-// render and would cut the animation short.
+// lives on #x01Board, outside the rows, so a row resizing can't cut it short.
 var x01FxSeen = { id: null, len: 0 };
 function playX01ScoreFx(game, st) {
   var len = (game.log || []).length;
@@ -148,67 +142,105 @@ function playX01ScoreFx(game, st) {
   x01FxSeen = { id: game.id, len: len };
   if (!grew) return;
   var e = st.entries[st.entries.length - 1];
-  var card = els.x01Players.children[e.player];
-  var num = card && card.querySelector('.remaining');
+  var num = els.x01Players.querySelector('[data-pi="' + e.player + '"] .ring-num');
   if (!num) return;
   // position from offsetLeft/Top summed up to #x01Board: unlike
-  // getBoundingClientRect, they ignore the card's pop-in scale animation
-  var x = -els.x01Players.scrollLeft, y = 0;
+  // getBoundingClientRect, they ignore transforms mid-animation
+  var x = 0, y = 0;
   for (var el = num; el && el !== els.x01Board; el = el.offsetParent) { x += el.offsetLeft; y += el.offsetTop; }
   var fx = document.createElement('span');
   fx.className = 'score-fx' + (e.bust ? ' bust' : '');
   fx.textContent = e.bust ? 'BUST' : '+' + e.attempted;
   fx.style.left = x + 'px';
-  fx.style.top = (y - 6) + 'px';
+  fx.style.top = (y - 10) + 'px';
   els.x01Board.appendChild(fx);
   setTimeout(function () { fx.remove(); }, 1400);
+}
+
+// Player rows: a ring per player that empties from the start score down to 0
+// (in Score mode it fills with the rounds played instead). Rows keep the turn
+// order; the thrower's row opens up. Built once per game and then only
+// updated, so the opening, the ring and the numbers animate between renders.
+var RING_C = 2 * Math.PI * 44;
+var x01RingsKey = null;
+function buildX01Rings(game) {
+  var circle = function (cls) {
+    return '<circle class="' + cls + '" cx="50" cy="50" r="44" stroke-dasharray="' + RING_C.toFixed(2) + '" transform="rotate(-90 50 50)"/>';
+  };
+  els.x01Players.innerHTML = game.players.map(function (name, pi) {
+    return '<div class="ring-row" data-pi="' + pi + '">'
+      + '<div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-track" cx="50" cy="50" r="44"/>' + circle('ring-preview') + circle('ring-arc') + '</svg>'
+      + '<span class="ring-num"></span></div>'
+      + '<div class="ring-info"><div class="ring-name"><b>' + escapeHtml(name) + '</b><span class="ring-avg"></span></div>'
+      + '<div class="ring-more"><span class="ring-stat"></span><span class="ring-last"></span></div></div></div>';
+  }).join('');
+}
+function updateX01Rings(game, st, pendingSum, dstats) {
+  var key = game.id + '|' + game.players.join('|');
+  if (key !== x01RingsKey) { buildX01Rings(game); x01RingsKey = key; }
+  var isScore = game.type === 'score';
+  Array.prototype.forEach.call(els.x01Players.children, function (row, pi) {
+    var cur = pi === st.currentPlayer && !st.finished;
+    var total = st.totals[pi], pend = cur ? pendingSum : 0;
+    var shown = isScore ? total + pend : Math.max(0, total - pend);
+    var turns = st.entries.filter(function (e) { return e.player === pi; });
+    var frac, fracBefore;
+    if (isScore) { frac = fracBefore = Math.min(1, turns.length / game.variant); }
+    else { frac = shown / game.variant; fracBefore = total / game.variant; }
+    row.classList.toggle('cur', cur);
+    row.classList.toggle('winner', st.winnerIndex === pi);
+    row.querySelector('.ring-arc').setAttribute('stroke-dashoffset', (RING_C * (1 - frac)).toFixed(2));
+    row.querySelector('.ring-preview').setAttribute('stroke-dashoffset', (RING_C * (1 - fracBefore)).toFixed(2));
+    row.querySelector('.ring-num').textContent = shown;
+    var avg = x01Avg3(dstats[pi].scored, dstats[pi].darts).toFixed(1);
+    row.querySelector('.ring-avg').textContent = 'moy ' + avg;
+    row.querySelector('.ring-stat').textContent = dstats[pi].darts + ' fléchettes · moy ' + avg;
+    row.querySelector('.ring-last').innerHTML = turns.slice(-3).map(function (e) {
+      return '<i class="' + (e.bust ? 'bust' : '') + '">' + e.attempted + '</i>';
+    }).join('');
+  });
+}
+// label of one entered dart, from its value and multiplier (0 = miss)
+function dartLabel(value, mult) {
+  if (mult === 0) return 'Raté';
+  if (value === 50 && mult === 2) return 'Bull';
+  if (value === 25 && mult === 1) return '25';
+  return (mult === 3 ? 'T' : mult === 2 ? 'D' : '') + (value / mult);
+}
+// this turn's 3 darts; the empty ones show the suggested finish for what's left
+function renderX01Slots(game, st, pendingSum) {
+  els.x01Slots.hidden = st.finished;
+  if (st.finished) return;
+  var left = st.totals[st.currentPlayer] - pendingSum;
+  var path = game.type === 'x01' ? suggestCheckout(left, game.doubleOut, 3 - x01Darts.length) : null;
+  var html = '';
+  for (var i = 0; i < 3; i++) {
+    if (x01Darts[i] !== undefined) {
+      html += '<span class="x01-slot ' + (x01DartMult[i] === 0 ? 'miss' : 'done') + '">' + dartLabel(x01Darts[i], x01DartMult[i]) + '</span>';
+    } else {
+      var hint = path ? path[i - x01Darts.length] : null;
+      html += '<span class="x01-slot' + (hint ? ' hint' : '') + '">' + (hint ? (hint === 'B' ? 'Bull' : hint) : '·') + '</span>';
+    }
+  }
+  els.x01Slots.innerHTML = html;
 }
 function renderX01(game) {
   var st = computeX01State(game);
   els.x01Pad.hidden = st.finished;
   var dstats = x01DartStats(game);
-  var isScoreMode = game.type === 'score';
-  // darts already tapped this turn (dart-by-dart mode) but not yet committed —
-  // reflected live on the current player's card instead of waiting for
-  // "Valider le tour". Always 0 in total-entry mode, since x01Darts stays empty.
+  // darts already tapped this turn (dart-by-dart mode), or the total being
+  // typed (total mode), previewed live on the thrower's ring before "Valider"
   var pendingSum = (!st.finished && x01Darts.length) ? sumDarts(x01Darts) : 0;
-  var html = '';
-  game.players.forEach(function (name, pi) {
-    var lastEntry = null;
-    st.entries.forEach(function (e) { if (e.player === pi) lastEntry = e; });
-    var avg = x01Avg3(dstats[pi].scored, dstats[pi].darts);
-    var shown = st.totals[pi];
-    if (pi === st.currentPlayer && pendingSum) { shown = isScoreMode ? shown + pendingSum : shown - pendingSum; }
-    html += '<div class="x01-card ' + (pi === st.currentPlayer && !st.finished ? 'cur' : '') + '">'
-      + '<div class="name">' + escapeHtml(name) + '</div>'
-      + '<div class="score-row">'
-      + '<div class="remaining">' + shown + '</div>'
-      + '<div class="stats"><div>' + dstats[pi].darts + ' flé</div><div>' + avg.toFixed(1) + ' moy/3</div></div>'
-      + '</div>'
-      + '<div class="sub">' + (lastEntry ? ('Dernier tour : ' + (lastEntry.bust ? 'raté (' + lastEntry.attempted + ')' : lastEntry.attempted)) : '—') + '</div>'
-      + '</div>';
-  });
-  els.x01Players.innerHTML = html;
+  var typed = (!st.finished && x01EntryMode === 'total' && x01Input) ? parseInt(x01Input, 10) : 0;
+  updateX01Rings(game, st, pendingSum || typed, dstats);
   // switchable mid-game (301/501 only) for when it was set wrong at launch
   els.x01OutSeg.hidden = game.type !== 'x01' || st.finished;
   Array.prototype.forEach.call(els.x01OutSeg.querySelectorAll('button'), function (b) {
     b.classList.toggle('active', (b.dataset.double === '1') === !!game.doubleOut);
     b.disabled = botIndex(game) === st.currentPlayer;
   });
-  focusCurrentPlayerCard(els.x01Players, game.id, st.currentPlayer, st.finished);
   playX01ScoreFx(game, st);
-
-  if (game.type === 'x01' && !st.finished) {
-    // same live adjustment, plus how many darts are left to suggest a
-    // checkout with.
-    var dartsLeftThisTurn = 3 - x01Darts.length;
-    var effectiveRemaining = st.totals[st.currentPlayer] - pendingSum;
-    var hint = checkoutHintText(effectiveRemaining, game.doubleOut, dartsLeftThisTurn);
-    els.checkoutHint.hidden = !hint;
-    if (hint) els.checkoutHint.textContent = hint;
-  } else {
-    els.checkoutHint.hidden = true;
-  }
+  renderX01Slots(game, st, pendingSum);
 
   Array.prototype.forEach.call(els.x01EntryModeSeg.querySelectorAll('button'), function (b) {
     b.classList.toggle('active', b.dataset.mode === x01EntryMode);
@@ -216,47 +248,41 @@ function renderX01(game) {
   els.x01TotalMode.hidden = x01EntryMode !== 'total';
   els.x01DartMode.hidden = x01EntryMode !== 'darts';
 
-  var keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '⌫'];
-  els.x01Keypad.innerHTML = keys.map(function (k) { return '<button type="button" data-key="' + k + '">' + k + '</button>'; }).join('');
-
-  els.x01Display.textContent = x01Input || '0';
+  var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', 'ok'];
+  els.x01Keypad.innerHTML = keys.map(function (k) {
+    if (k === '⌫') return '<button type="button" class="soft" data-key="⌫" aria-label="Effacer"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M9 6h11v12H9l-6-6z"/><path d="M13 10l4 4M17 10l-4 4"/></svg></button>';
+    if (k === 'ok') return '<button type="button" class="ok" data-key="ok" aria-label="Valider le tour"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>';
+    return '<button type="button" data-key="' + k + '">' + k + '</button>';
+  }).join('');
+  renderX01Display();
   els.checkoutConfirm.hidden = true;
   // Locked while the bot is mid-turn — it drives x01Darts/x01Input itself,
   // programmatically, so this only ever blocks a stray human click.
   var isBotTurn = botIndex(game) === st.currentPlayer;
-  els.x01Submit.disabled = st.finished || isBotTurn;
   Array.prototype.forEach.call(els.x01Pad.querySelectorAll('button'), function (b) {
     if (b === els.undoX01Btn) return;
     b.disabled = st.finished || isBotTurn;
   });
   els.undoX01Btn.disabled = (game.log || []).length === 0 || isBotTurn;
 
-  // dart-by-dart pad: rendered last so its own per-button disabling (bull has
-  // no triple, at most 3 darts a turn) isn't clobbered by the blanket toggle above
-  Array.prototype.forEach.call(els.dartSlots.querySelectorAll('.dart-slot'), function (slot, i) {
-    var v = x01Darts[i];
-    if (v === undefined) { slot.textContent = ''; slot.className = 'dart-slot'; }
-    else if (v === 0) { slot.textContent = '✕'; slot.className = 'dart-slot miss'; }
-    else { slot.textContent = v; slot.className = 'dart-slot filled'; }
-  });
+  // dart-by-dart pad: set last so its own per-button disabling (bull has no
+  // triple, at most 3 darts a turn) isn't clobbered by the blanket toggle above
   Array.prototype.forEach.call(els.x01MultChips.querySelectorAll('.chip'), function (c) {
     c.classList.toggle('active', parseInt(c.dataset.mult, 10) === selectedMult);
   });
-  var dartGridHtml = X01_DART_NUMS.map(function (num) {
+  els.x01DartGrid.innerHTML = X01_DART_NUMS.map(function (num) {
     var isBull = num === 25;
     var disabled = st.finished || isBotTurn || (isBull && selectedMult === 3) || x01Darts.length >= 3;
-    return '<button type="button" class="x01-dart-btn" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + (isBull ? 'Bull' : num) + '</button>';
+    return '<button type="button" class="x01-dart-btn' + (isBull ? ' bull' : '') + '" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + (isBull ? 'Bull' : num) + '</button>';
   }).join('');
-  // miss/undo ride along in the same grid as the number buttons — right after
-  // Bull — so they land on Bull's row instead of a separate full-width row.
-  var missDisabled = st.finished || isBotTurn || x01Darts.length >= 3;
-  var undoDisabled = st.finished || isBotTurn || x01Darts.length === 0;
-  dartGridHtml += '<button type="button" class="x01-dart-btn x01-dart-miss" id="x01DartMissBtn" title="Raté" ' + (missDisabled ? 'disabled' : '') + '>✕</button>';
-  dartGridHtml += '<button type="button" class="x01-dart-btn x01-dart-undo" id="x01DartUndoBtn" title="Dernière fléchette" ' + (undoDisabled ? 'disabled' : '') + '>⌫</button>';
-  els.x01DartGrid.innerHTML = dartGridHtml;
+  els.x01DartMissBtn.disabled = st.finished || isBotTurn || x01Darts.length >= 3;
+  els.x01DartUndoBtn.disabled = st.finished || isBotTurn || x01Darts.length === 0;
 
   renderThrowLogX01(game, st);
   renderWinner(game, st.finished, st.winnerIndex);
+}
+function renderX01Display() {
+  els.x01Display.innerHTML = '<small>Tour</small> ' + (x01Input || '—');
 }
 
 function renderThrowLogX01(game, st) {
@@ -340,27 +366,7 @@ els.x01MultChips.addEventListener('click', function (e) {
 });
 els.x01DartGrid.addEventListener('click', function (e) {
   var b = e.target.closest('.x01-dart-btn');
-  if (!b || b.disabled) return;
-  if (b.id === 'x01DartMissBtn') {
-    if (x01Darts.length >= 3) return;
-    playMiss();
-    x01Darts.push(0);
-    x01DartMult.push(0);
-    x01Input = String(sumDarts(x01Darts));
-    selectedMult = 1;
-    if (activeGame) renderX01(activeGame);
-    if (x01Darts.length === 3) submitX01Turn();
-    return;
-  }
-  if (b.id === 'x01DartUndoBtn') {
-    if (!x01Darts.length) return;
-    x01Darts.pop();
-    x01DartMult.pop();
-    x01Input = x01Darts.length ? String(sumDarts(x01Darts)) : '';
-    if (activeGame) renderX01(activeGame);
-    return;
-  }
-  if (x01Darts.length >= 3) return;
+  if (!b || b.disabled || x01Darts.length >= 3) return;
   playHit();
   x01Darts.push(dartValue(parseInt(b.dataset.num, 10), selectedMult));
   x01DartMult.push(selectedMult);
@@ -371,20 +377,37 @@ els.x01DartGrid.addEventListener('click', function (e) {
   // as soon as a dart finishes the game or busts (see dartEndsTurn)
   if (x01Darts.length === 3 || dartEndsTurn()) submitX01Turn();
 });
+els.x01DartMissBtn.addEventListener('click', function () {
+  if (x01Darts.length >= 3) return;
+  playMiss();
+  x01Darts.push(0);
+  x01DartMult.push(0);
+  x01Input = String(sumDarts(x01Darts));
+  selectedMult = 1;
+  if (activeGame) renderX01(activeGame);
+  if (x01Darts.length === 3) submitX01Turn();
+});
+els.x01DartUndoBtn.addEventListener('click', function () {
+  if (!x01Darts.length) return;
+  x01Darts.pop();
+  x01DartMult.pop();
+  x01Input = x01Darts.length ? String(sumDarts(x01Darts)) : '';
+  if (activeGame) renderX01(activeGame);
+});
 
 els.x01Keypad.addEventListener('click', function (e) {
   var b = e.target.closest('button');
-  if (!b) return;
+  if (!b || b.disabled) return;
   var k = b.dataset.key;
-  if (k === 'C') { x01Input = ''; }
-  else if (k === '⌫') { x01Input = x01Input.slice(0, -1); }
+  if (k === 'ok') { submitX01Turn(); return; }
+  if (k === '⌫') { x01Input = x01Input.slice(0, -1); }
   else {
     if (x01Input.length >= 3) return;
-    var next = x01Input + k;
+    var next = (x01Input + k).replace(/^0+(?=\d)/, '');
     if (parseInt(next, 10) > 180) return;
     x01Input = next;
   }
-  els.x01Display.textContent = x01Input || '0';
+  if (activeGame) renderX01(activeGame);
 });
 els.x01Submit.addEventListener('click', submitX01Turn);
 els.undoX01Btn.addEventListener('click', undoX01);
