@@ -967,6 +967,8 @@ function clockFilterVariant(f) { return f === 'clock-double' ? 'double' : f === 
 // straight-out one — so each variant also gets its own double/simple bucket,
 // same idea as Horloge's Simple/Doubles/Triples split above. The plain
 // '301'/'501' filters stay as the "toutes sorties" combined view.
+function isScoreFilter(f) { return f === 'score' || (typeof f === 'string' && f.indexOf('score-') === 0); }
+function scoreFilterRounds(f) { return f && f.indexOf('score-') === 0 ? parseInt(f.slice(6), 10) : null; }
 function isX01Filter(f) { return f === '301' || f === '501' || f === '301-double' || f === '301-simple' || f === '501-double' || f === '501-simple'; }
 function x01FilterVariant(f) { return f.indexOf('301') === 0 ? 301 : 501; }
 function x01FilterDoubleOut(f) { return f.indexOf('-double') !== -1 ? true : f.indexOf('-simple') !== -1 ? false : null; }
@@ -1038,7 +1040,7 @@ function statsGamesFor(name, filterType) {
       return g.type === 'x01' && g.variant === x01FilterVariant(filterType) && (doubleOut === null || !!g.doubleOut === doubleOut);
     }
     if (filterType === 'x01') return g.type === 'x01';
-    if (filterType === 'score') return g.type === 'score';
+    if (isScoreFilter(filterType)) return g.type === 'score' && (scoreFilterRounds(filterType) === null || g.variant === scoreFilterRounds(filterType));
     if (isClockFilter(filterType)) return g.type === 'clock' && (g.clockMultiplier || 'any') === clockFilterVariant(filterType);
     return true;
   });
@@ -1133,7 +1135,7 @@ function topGamesForPlayer(name, filterType) {
       var doubleOut = x01FilterDoubleOut(filterType);
       return g.type === 'x01' && g.variant === x01FilterVariant(filterType) && (doubleOut === null || !!g.doubleOut === doubleOut);
     }
-    if (filterType === 'score') return g.type === 'score';
+    if (isScoreFilter(filterType)) return g.type === 'score' && (scoreFilterRounds(filterType) === null || g.variant === scoreFilterRounds(filterType));
     if (isClockFilter(filterType)) {
       return g.type === 'clock' && (g.clockMultiplier || 'any') === clockFilterVariant(filterType)
         && g.winnerIndex != null && g.players[g.winnerIndex] === name;
@@ -1164,10 +1166,12 @@ function topGamesForPlayer(name, filterType) {
   return rows.slice(0, 100);
 }
 function renderStatsTopList() {
-  var show = !!statsSelectedPlayer && STATS_TOP_LABELS.hasOwnProperty(statsFilterType);
+  var labelKey = isScoreFilter(statsFilterType) ? 'score' : statsFilterType;
+  var show = !!statsSelectedPlayer && STATS_TOP_LABELS.hasOwnProperty(labelKey);
   els.statsTopCard.hidden = !show;
   if (!show) return;
-  els.statsTopTitle.textContent = STATS_TOP_LABELS[statsFilterType];
+  var rounds = scoreFilterRounds(statsFilterType);
+  els.statsTopTitle.textContent = STATS_TOP_LABELS[labelKey] + (rounds ? ' (' + rounds + ' lancers)' : '');
   var rows = topGamesForPlayer(statsSelectedPlayer, statsFilterType);
   if (!rows.length) {
     els.statsTopList.innerHTML = '<p class="history-empty">Aucune partie pour l\'instant.</p>';
@@ -1213,15 +1217,15 @@ function renderStatsDetail() {
   }
   if (statsFilterType === 'cricket') {
     els.statsThirdTile.hidden = false;
-    els.statsThirdLabel.textContent = 'MPR moyen';
+    els.statsThirdLabel.textContent = 'MPR · global';
     els.statsThirdValue.textContent = st.mpr.toFixed(1);
-  } else if (isX01Filter(statsFilterType) || statsFilterType === 'score') {
+  } else if (isX01Filter(statsFilterType) || isScoreFilter(statsFilterType)) {
     els.statsThirdTile.hidden = false;
-    els.statsThirdLabel.textContent = 'Moyenne aux 3 fléchettes';
+    els.statsThirdLabel.textContent = 'moyenne 3 fl. · global';
     els.statsThirdValue.textContent = st.avg3.toFixed(1);
   } else if (isClockFilter(statsFilterType)) {
     els.statsThirdTile.hidden = false;
-    els.statsThirdLabel.textContent = 'Fléchettes moy. pour terminer';
+    els.statsThirdLabel.textContent = 'fléchettes moy. pour finir';
     els.statsThirdValue.textContent = st.avgClockDarts.toFixed(1);
   } else {
     els.statsThirdTile.hidden = true;
@@ -1230,7 +1234,7 @@ function renderStatsDetail() {
     var co = x01CheckoutStats(statsSelectedPlayer, statsFilterType);
     els.statsFourthTile.hidden = false;
     els.statsFourthValue.textContent = co.pct.toFixed(1) + '%';
-    els.statsFourthLabel.textContent = 'Fermeture (' + co.hits + '/' + co.attempts + ')';
+    els.statsFourthLabel.textContent = 'fermeture (' + co.hits + '/' + co.attempts + ')';
     var ms = x01MilestoneStats(statsSelectedPlayer, statsFilterType);
     els.statsMilestonesCard.hidden = false;
     els.statsFirst9.textContent = ms.first9Darts ? ms.first9Avg.toFixed(1) : '—';
@@ -1238,6 +1242,16 @@ function renderStatsDetail() {
     els.stats180.textContent = ms.t180;
     els.stats140.textContent = ms.t140;
     els.stats100.textContent = ms.t100;
+  } else if (isScoreFilter(statsFilterType)) {
+    // best single-game total, for the selected length (or all lengths)
+    var best = 0;
+    statsGamesFor(statsSelectedPlayer, statsFilterType).forEach(function (g) {
+      best = Math.max(best, computeX01State(g).totals[g.players.indexOf(statsSelectedPlayer)]);
+    });
+    els.statsFourthTile.hidden = false;
+    els.statsFourthValue.textContent = best;
+    els.statsFourthLabel.textContent = 'meilleur total';
+    els.statsMilestonesCard.hidden = true;
   } else {
     els.statsFourthTile.hidden = true;
     els.statsMilestonesCard.hidden = true;
@@ -1347,6 +1361,11 @@ function renderTrendChart(data, elsChart, idPrefix, unit, countLabel) {
   }
 
   var pathD = data.map(function (d, i) { return (i === 0 ? 'M' : 'L') + xAt(i).toFixed(1) + ',' + yAt(d.value).toFixed(1); }).join(' ');
+  var last = data.length - 1;
+  var areaD = pathD + ' L' + xAt(last).toFixed(1) + ',' + yAt(0).toFixed(1) + ' L' + xAt(0).toFixed(1) + ',' + yAt(0).toFixed(1) + ' Z';
+  var lastX = xAt(last), lastY = yAt(data[last].value);
+  var endSvg = '<circle class="trend-end" cx="' + lastX.toFixed(1) + '" cy="' + lastY.toFixed(1) + '" r="7"/>'
+    + '<text class="trend-end-label" x="' + (lastX - 10).toFixed(1) + '" y="' + (lastY - 12).toFixed(1) + '" text-anchor="end">' + data[last].value.toFixed(1) + '</text>';
 
   var labelEvery = Math.max(1, Math.ceil(data.length / 6));
   var xLabelsSvg = data.map(function (d, i) {
@@ -1355,13 +1374,14 @@ function renderTrendChart(data, elsChart, idPrefix, unit, countLabel) {
   }).join('');
 
   var dotsSvg = data.map(function (d, i) {
-    return '<circle class="trend-dot" data-i="' + i + '" cx="' + xAt(i).toFixed(1) + '" cy="' + yAt(d.value).toFixed(1) + '" r="4.5"/>';
+    return '<circle class="trend-dot" data-i="' + i + '" cx="' + xAt(i).toFixed(1) + '" cy="' + yAt(d.value).toFixed(1) + '" r="3.5"/>';
   }).join('');
 
   elsChart.svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
   elsChart.svg.innerHTML = gridSvg
+    + (data.length > 1 ? '<path class="trend-area" d="' + areaD + '"/>' : '')
     + '<path class="trend-line" d="' + pathD + '" fill="none"/>'
-    + dotsSvg + xLabelsSvg
+    + dotsSvg + endSvg + xLabelsSvg
     + '<line id="' + idPrefix + 'Crosshair" x1="0" y1="' + padT + '" x2="0" y2="' + (H - padB) + '" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>'
     + '<rect id="' + idPrefix + 'HoverLayer" x="' + padL + '" y="' + padT + '" width="' + innerW + '" height="' + innerH + '" fill="transparent"/>';
 
@@ -1374,7 +1394,7 @@ function wireTrendHover(elsChart, idPrefix, data, xAt, viewboxW, unit, countLabe
   var dots = svg.querySelectorAll('.trend-dot');
   function showAt(i) {
     var d = data[i];
-    Array.prototype.forEach.call(dots, function (dot, di) { dot.setAttribute('r', di === i ? '6.5' : '4.5'); });
+    Array.prototype.forEach.call(dots, function (dot, di) { dot.setAttribute('r', di === i ? '6' : '3.5'); });
     var x = parseFloat(dots[i].getAttribute('cx')), y = parseFloat(dots[i].getAttribute('cy'));
     crosshair.setAttribute('x1', x); crosshair.setAttribute('x2', x); crosshair.setAttribute('opacity', '1');
     var scale = svg.getBoundingClientRect().width / viewboxW;
@@ -1384,7 +1404,7 @@ function wireTrendHover(elsChart, idPrefix, data, xAt, viewboxW, unit, countLabe
     elsChart.tooltip.hidden = false;
   }
   function hide() {
-    Array.prototype.forEach.call(dots, function (dot) { dot.setAttribute('r', '4.5'); });
+    Array.prototype.forEach.call(dots, function (dot) { dot.setAttribute('r', '3.5'); });
     crosshair.setAttribute('opacity', '0');
     elsChart.tooltip.hidden = true;
   }
@@ -1418,10 +1438,33 @@ els.mprPeriodSeg.addEventListener('click', function (e) {
 });
 
 var avg3ChartPeriod = 'week';
+function scoreTrendData(name, rounds, period) {
+  var buckets = {};
+  historyGames.forEach(function (g) {
+    if (g.type !== 'score' || !g.finishedAt || g.players.indexOf(name) === -1) return;
+    if (rounds !== null && g.variant !== rounds) return;
+    var key = chartBucketKey(g.finishedAt, period);
+    if (!buckets[key]) buckets[key] = { total: 0, count: 0 };
+    buckets[key].total += computeX01State(g).totals[g.players.indexOf(name)];
+    buckets[key].count++;
+  });
+  return Object.keys(buckets).sort().map(function (key) {
+    var b = buckets[key];
+    return { label: chartBucketLabel(key, period), value: b.total / b.count, count: b.count };
+  });
+}
 function renderAvg3Chart() {
-  var show = !!statsSelectedPlayer && isX01Filter(statsFilterType);
+  var isScore = isScoreFilter(statsFilterType);
+  var show = !!statsSelectedPlayer && (isX01Filter(statsFilterType) || isScore);
   els.avg3ChartCard.hidden = !show;
   if (!show) return;
+  els.avg3ChartTitle.textContent = isScore ? 'Total moyen par partie' : 'Moyenne aux 3 fléchettes';
+  if (isScore) {
+    renderTrendChart(scoreTrendData(statsSelectedPlayer, scoreFilterRounds(statsFilterType), avg3ChartPeriod),
+      { wrap: els.avg3ChartWrap, svg: els.avg3ChartSvg, tooltip: els.avg3ChartTooltip, empty: els.avg3ChartEmpty }, 'avg3', 'pts',
+      function (d) { return d.count + (d.count > 1 ? ' parties' : ' partie'); });
+    return;
+  }
   var data = avg3TrendData(statsSelectedPlayer, x01FilterVariant(statsFilterType), avg3ChartPeriod, x01FilterDoubleOut(statsFilterType));
   renderTrendChart(data, { wrap: els.avg3ChartWrap, svg: els.avg3ChartSvg, tooltip: els.avg3ChartTooltip, empty: els.avg3ChartEmpty }, 'avg3', 'moy/3',
     function (d) { return d.count + ' flé'; });
@@ -1539,11 +1582,9 @@ function renderClockNumberStats() {
     els.clockNumberStatsList.innerHTML = '<p class="stat-empty">Pas de fléchette en Horloge sur cette période.</p>';
     return;
   }
-  els.clockNumberStatsList.innerHTML = rows.map(function (r) {
-    return '<div class="stat-row"><span class="stat-name">' + r.label + '</span>'
-      + '<span class="stat-bar-track"><span class="stat-bar-fill" style="width:' + r.pct + '%"></span></span>'
-      + '<span class="stat-val mono">' + r.pct + '%</span></div>';
-  }).join('');
+  els.clockNumberStatsList.innerHTML = '<div class="heat-grid">' + rows.map(function (r) {
+    return '<span class="heat-cell" style="--heat:' + Math.round(Math.min(1, r.pct / 60) * 80) + '%"><b>' + r.label + '</b><small>' + r.pct + '%</small></span>';
+  }).join('') + '</div>';
 }
 els.clockNumberPeriodSeg.addEventListener('click', function (e) {
   var b = e.target.closest('button');
@@ -1584,7 +1625,7 @@ function statsFigureKind(filter) {
   if (filter === 'cricket') return 'cricket';
   if (isX01Filter(filter)) return 'x01';
   if (isClockFilter(filter)) return 'clock';
-  if (filter === 'score') return 'score';
+  if (isScoreFilter(filter)) return 'score';
   return null;
 }
 // one game's contribution to a mode's key figure, as num/den so several
@@ -1618,7 +1659,8 @@ function renderStatsSummary() {
   els.statsMeta.textContent = games.length + (games.length > 1 ? ' parties' : ' partie')
     + (oldest ? ' depuis le ' + new Date(oldest).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : '');
   var cards = STATS_MODES.map(function (mode) {
-    var kind = statsFigureKind(mode.filter);
+    // Score totals depend on the game length, so its card shows the 3-dart average instead
+    var kind = mode.id === 'score' ? 'x01' : statsFigureKind(mode.filter);
     var mg = games.filter(mode.test).sort(function (a, b) { return (b.finishedAt || 0) - (a.finishedAt || 0); });
     if (!mg.length) return '';
     var recent = mg.slice(0, 10);
@@ -1653,9 +1695,16 @@ function openStatsMode(id) {
   renderStatsDetail();
   window.scrollTo(0, 0);
 }
+function scoreSubsFor(name) {
+  var lengths = {};
+  historyGames.forEach(function (g) { if (g.type === 'score' && g.players.indexOf(name) !== -1) lengths[g.variant] = true; });
+  var list = Object.keys(lengths).map(Number).sort(function (a, b) { return a - b; });
+  return list.length > 1 ? [['score', 'Toutes']].concat(list.map(function (n) { return ['score-' + n, n + ' lancers']; })) : null;
+}
 function renderStatsSubPills(mode) {
-  els.statsSubPills.hidden = !mode.subs;
-  els.statsSubPills.innerHTML = (mode.subs || []).map(function (sub) {
+  var subs = mode.id === 'score' ? scoreSubsFor(statsSelectedPlayer) : mode.subs;
+  els.statsSubPills.hidden = !subs;
+  els.statsSubPills.innerHTML = (subs || []).map(function (sub) {
     return '<button type="button" data-filter="' + sub[0] + '" class="' + (sub[0] === statsFilterType ? 'active' : '') + '">' + sub[1] + '</button>';
   }).join('');
 }

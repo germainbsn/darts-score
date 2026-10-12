@@ -27,7 +27,7 @@ var els = {};
   'statsBotCard', 'statsBotList',
   'statsTopCard', 'statsTopTitle', 'statsTopList',
   'mprChartCard', 'mprPeriodSeg', 'mprChartWrap', 'mprChartSvg', 'mprChartTooltip', 'mprChartEmpty',
-  'avg3ChartCard', 'avg3PeriodSeg', 'avg3ChartWrap', 'avg3ChartSvg', 'avg3ChartTooltip', 'avg3ChartEmpty',
+  'avg3ChartCard', 'avg3ChartTitle', 'avg3PeriodSeg', 'avg3ChartWrap', 'avg3ChartSvg', 'avg3ChartTooltip', 'avg3ChartEmpty',
   'checkoutChartCard', 'checkoutPeriodSeg', 'checkoutChartWrap', 'checkoutChartSvg', 'checkoutChartTooltip', 'checkoutChartEmpty',
   'clockChartCard', 'clockChartPeriodSeg', 'clockChartWrap', 'clockChartSvg', 'clockChartTooltip', 'clockChartEmpty',
   'clockNumberStatsCard', 'clockNumberPeriodSeg', 'clockNumberSortSeg', 'clockNumberStatsList',
