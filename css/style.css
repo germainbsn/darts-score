@@ -393,7 +393,6 @@ select{
 .play-header{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
 .play-title{font-family:"Fraunces",serif; font-weight:700; font-size:1.5rem; letter-spacing:.01em;}
 
-.board-scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:14px; background:var(--surface);}
 table.recap-table{border-collapse:collapse; width:100%;}
 table.recap-table th, table.recap-table td{padding:9px 8px; text-align:center; border-bottom:1px solid var(--rule); vertical-align:middle;}
 table.recap-table thead th{font-family:"Fraunces",serif; font-weight:700; color:var(--ink-soft); border-bottom:2px solid var(--rule); white-space:nowrap;}
@@ -404,29 +403,24 @@ table.recap-table tfoot td, table.recap-table tfoot th{border-bottom:none; borde
 .recap-main{display:block; font-weight:700;}
 .recap-sub{display:block; font-size:.75rem; color:var(--ink-soft);}
 .recap-hint{font-size:.8rem; color:var(--ink-soft);}
-table.cricket-table{border-collapse:collapse; width:100%; min-width:360px;}
-table.cricket-table th, table.cricket-table td{padding:10px 8px; text-align:center; border-bottom:1px solid var(--rule);}
-table.cricket-table thead th{
-  font-family:"Fraunces",serif; font-weight:700; letter-spacing:.01em; font-size:1rem; color:var(--ink-soft); border-bottom:2px solid var(--rule);
-}
-table.cricket-table thead th.cur-col{color:var(--gold-ink); background:var(--gold-soft); box-shadow:inset 0 3px 0 var(--gold), inset 2px 0 0 var(--gold), inset -2px 0 0 var(--gold);}
-table.cricket-table td.cur{box-shadow:inset 2px 0 0 var(--gold), inset -2px 0 0 var(--gold);}
-tr.score-row td.cur{background:var(--gold-soft); box-shadow:inset 2px 0 0 var(--gold), inset -2px 0 0 var(--gold), inset 0 -3px 0 var(--gold);}
-table.cricket-table tbody th{text-align:left; padding-left:12px; white-space:nowrap;}
-.num-chip{
-  display:inline-flex; align-items:center; justify-content:center; min-width:38px; height:30px; padding:0 8px; border-radius:8px;
-  font-family:"Space Mono"; font-weight:700; font-size:.95rem; color:var(--ink); background:var(--surface-2); border:1px solid var(--rule);
-}
-.num-chip.bull{font-size:.8rem;}
-td.mark-cell{position:relative;}
-table.cricket-table tr.dead-row th, table.cricket-table tr.dead-row td{
-  background-image:linear-gradient(transparent calc(50% - 1px), var(--ink-soft) calc(50% - 1px), var(--ink-soft) calc(50% + 1px), transparent calc(50% + 1px));
-}
-tr.dead-row .num-chip, tr.dead-row .mark{opacity:.35;}
-td.mark-cell.cur{background:var(--gold-soft);}
-.mark{width:26px; height:26px; margin:0 auto; display:block; stroke:var(--ink-soft); stroke-width:2.4; stroke-linecap:round; fill:none;}
-td.mark-cell.closed .mark{stroke:var(--gold-ink); stroke-width:2.6;}
-td.mark-cell.closed{color:var(--gold-ink); font-weight:700; font-size:1.1rem;}
+/* ---------- Cricket: pub chalkboard ---------- */
+.cricket-slate-scroll{overflow-x:auto; border-radius:18px; background:var(--board);}
+.cricket-slate{display:grid; color:var(--cream); padding:10px 8px 8px; min-width:100%; width:max-content;}
+.cs-head{display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 4px 8px; border-bottom:1.5px solid color-mix(in srgb, var(--cream) 30%, transparent); min-width:0;}
+.cs-head.cs-num{border-bottom-color:transparent;}
+.cs-name{max-width:100%; font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:color-mix(in srgb, var(--cream) 60%, transparent); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cs-score{font-family:"Fraunces",serif; font-weight:900; font-size:1.7rem; line-height:1.1; font-variant-numeric:tabular-nums lining-nums;}
+.cs-head.cur .cs-name, .cs-head.cur .cs-score{color:var(--gold);}
+.cs-head.winner .cs-score{color:var(--green);}
+.cs-cell{height:40px; display:flex; align-items:center; justify-content:center; border-bottom:1px dashed color-mix(in srgb, var(--cream) 14%, transparent);}
+.cs-cell.cur, .cs-head.cur, .cs-foot.cur{background:color-mix(in srgb, var(--gold) 14%, transparent);}
+.cs-cell.cs-num{font-family:"Fraunces",serif; font-weight:900; font-size:1.3rem; color:var(--cream);}
+.cs-cell.cs-num.bull{font-size:.9rem;}
+.cs-cell.dead{opacity:.28;}
+.cs-cell.cs-num.dead{text-decoration:line-through;}
+.cs-foot{padding:6px 2px 2px; text-align:center; font-family:"Space Mono",monospace; font-size:.66rem; color:color-mix(in srgb, var(--cream) 55%, transparent); white-space:nowrap;}
+.cricket-slate .mark{width:26px; height:26px; display:block; stroke:color-mix(in srgb, var(--cream) 85%, transparent); stroke-width:2.6; stroke-linecap:round; fill:none;}
+.cricket-slate .cs-cell.closed .mark{stroke:var(--gold);}
 /* ---------- Horloge: player tabs on a slate with the lit dartboard ---------- */
 .clock-tabs{display:flex; gap:4px; overflow-x:auto; scrollbar-width:none;}
 .clock-tabs::-webkit-scrollbar{display:none;}
@@ -466,6 +460,20 @@ td.mark-cell.closed{color:var(--gold-ink); font-weight:700; font-size:1.1rem;}
 .clock-stats tr.cur td{color:var(--gold-ink);}
 .clock-stats tr.cur td:first-child::before{content:"● "; color:var(--gold);}
 .dart-pad.clock-pad{background:transparent; border:none; padding:6px 0 0; gap:8px;}
+.dart-pad.cricket-pad{background:transparent; border:none; padding:10px 0 0; gap:9px;}
+.cricket-pad #multChips{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
+.cricket-pad #multChips .chip{border:none; border-radius:999px; padding:7px 0; font-size:.84rem; color:var(--ink-soft); background:var(--surface-2);}
+.cricket-pad #multChips .chip.active[data-mult="1"]{background:var(--ink); color:var(--bg);}
+.cricket-pad #multChips .chip.active[data-mult="2"]{background:var(--green); color:#fff;}
+.cricket-pad #multChips .chip.active[data-mult="3"]{background:var(--red); color:#fff;}
+.cricket-pad .num-grid{gap:5px;}
+.cricket-pad .num-btn{border:none; border-radius:999px; height:46px; padding:0; background:var(--surface-2); font-family:"Karla",system-ui,sans-serif; font-weight:700; font-size:1.08rem; transition:transform .08s ease, background-color .12s ease;}
+.cricket-pad .num-btn:hover:not(:disabled){border-color:transparent;}
+.cricket-pad .num-btn:active:not(:disabled){transform:scale(.93); background:var(--gold-soft);}
+.cricket-pad .num-btn.dead{text-decoration:line-through;}
+.cricket-pad .miss-row{display:grid; grid-template-columns:1fr 1.3fr; gap:6px;}
+.cricket-pad .miss-btn{height:42px; padding:0; border:none; border-radius:999px; background:var(--red-soft); color:var(--danger); font-size:.9rem; font-weight:700; letter-spacing:0; cursor:pointer;}
+.cricket-pad .miss-btn:disabled{opacity:.35; cursor:not-allowed;}
 .clock-hit{
   height:58px; border:none; border-radius:999px; background:var(--gold); color:#211a08; cursor:pointer;
   font-weight:800; font-size:1.05rem; display:flex; align-items:center; justify-content:center; gap:8px;
@@ -475,10 +483,6 @@ td.mark-cell.closed{color:var(--gold-ink); font-weight:700; font-size:1.1rem;}
 .clock-misses{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
 .clock-misses button{height:42px; border:none; border-radius:999px; background:var(--red-soft); color:var(--danger); font-weight:700; font-size:.88rem; cursor:pointer;}
 .clock-misses button:disabled{opacity:.35; cursor:not-allowed;}
-tr.score-row th, tr.score-row td{border-bottom:none; border-top:2px solid var(--rule); font-family:"Space Mono"; font-weight:700; font-size:1.05rem;}
-tr.score-row td.winner{color:var(--green);}
-tr.stats-row th, tr.stats-row td{border-bottom:none; border-top:1px dashed var(--rule); font-family:"Space Mono"; font-weight:600; font-size:.85rem; color:var(--ink-soft); padding-top:6px;}
-tr.stats-row th{text-align:left; padding-left:12px;}
 
 .dart-pad{background:var(--surface); border:1px solid var(--rule); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px;}
 .mult-chips{display:flex; gap:8px;}

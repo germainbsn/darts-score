@@ -40,49 +40,58 @@ function computeCricketState(game) {
 // ---------- rendering ----------
 function markSVG(n) {
   if (n <= 0) return '<svg class="mark" viewBox="0 0 24 24"></svg>';
-  if (n === 1) return '<svg class="mark" viewBox="0 0 24 24"><line x1="6" y1="18" x2="18" y2="6"/></svg>';
+  if (n === 1) return '<svg class="mark" viewBox="0 0 24 24"><line x1="7" y1="18" x2="17" y2="6"/></svg>';
   if (n === 2) return '<svg class="mark" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';
   return '<svg class="mark" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/><circle cx="12" cy="12" r="9"/></svg>';
+}
+
+// The pub chalkboard: with 2 players the numbers sit in the middle, one
+// player on each side (as on a real cricket board); with more, a numbers
+// column then one column per player. Marks are chalk strokes, gold once the
+// number is closed; a number closed by everyone is struck through.
+function renderCricketSlate(game, st) {
+  var stats = cricketDartStats(game);
+  var order = game.players.length === 2 ? [0, 'N', 1] : ['N'].concat(game.players.map(function (_, i) { return i; }));
+  var live = !st.finished;
+  var html = '';
+  order.forEach(function (c) {
+    if (c === 'N') { html += '<div class="cs-head cs-num"></div>'; return; }
+    var cls = (c === st.currentPlayer && live ? ' cur' : '') + (st.winnerIndex === c ? ' winner' : '');
+    html += '<div class="cs-head' + cls + '"><span class="cs-name">' + escapeHtml(game.players[c]) + '</span><b class="cs-score">' + st.scores[c] + '</b></div>';
+  });
+  CRICKET_NUMS.forEach(function (num, idx) {
+    // closed by everyone: nobody can score on it any more
+    var dead = st.marks.every(function (pm) { return pm[idx] >= 3; }) ? ' dead' : '';
+    order.forEach(function (c) {
+      if (c === 'N') { html += '<div class="cs-cell cs-num' + dead + (num === 25 ? ' bull' : '') + '">' + CRICKET_LABELS[num] + '</div>'; return; }
+      var m = st.marks[c][idx];
+      html += '<div class="cs-cell' + (c === st.currentPlayer && live ? ' cur' : '') + (m >= 3 ? ' closed' : '') + dead + '">' + markSVG(m) + '</div>';
+    });
+  });
+  order.forEach(function (c) {
+    if (c === 'N') { html += '<div class="cs-foot cs-num"></div>'; return; }
+    var d = stats[c].darts, mpr = d ? (stats[c].marks / d * 3) : 0;
+    html += '<div class="cs-foot' + (c === st.currentPlayer && live ? ' cur' : '') + '">' + d + ' flé · ' + mpr.toFixed(1) + ' mpr</div>';
+  });
+  els.cricketTable.style.gridTemplateColumns = order.map(function (c) { return c === 'N' ? '50px' : 'minmax(64px, 1fr)'; }).join(' ');
+  els.cricketTable.innerHTML = html;
 }
 
 function renderCricket(game) {
   var st = computeCricketState(game);
   els.dartPad.hidden = st.finished;
-  var html = '<thead><tr><th>Cible</th>';
-  game.players.forEach(function (name, i) {
-    var isCur = i === st.currentPlayer && !st.finished;
-    html += '<th class="' + (isCur ? 'cur-col' : '') + '">' + (isCur ? '🎯 ' : '') + escapeHtml(name) + '</th>';
-  });
-  html += '</tr></thead><tbody>';
-  CRICKET_NUMS.forEach(function (num, idx) {
-    // closed by everyone: nobody can score on it any more
-    var dead = st.marks.every(function (pm) { return pm[idx] >= 3; });
-    html += '<tr' + (dead ? ' class="dead-row"' : '') + '><th><span class="num-chip' + (num === 25 ? ' bull' : '') + '">' + CRICKET_LABELS[num] + '</span></th>';
-    game.players.forEach(function (name, pi) {
-      var m = st.marks[pi][idx];
-      var cls = 'mark-cell' + (m >= 3 ? ' closed' : '') + (pi === st.currentPlayer && !st.finished ? ' cur' : '');
-      html += '<td class="' + cls + '">' + markSVG(m) + '</td>';
-    });
-    html += '</tr>';
-  });
-  html += '<tr class="score-row"><th>Score</th>';
-  game.players.forEach(function (name, pi) {
-    var scoreCls = (st.winnerIndex === pi ? 'winner' : '') + (pi === st.currentPlayer && !st.finished ? ' cur' : '');
-    html += '<td class="' + scoreCls + '">' + st.scores[pi] + '</td>';
-  });
-  html += '</tr>';
-  html += statsRowHtml(game);
-  html += '</tbody>';
-  els.cricketTable.innerHTML = html;
+  renderCricketSlate(game, st);
 
   // dart pad — also locked while the bot is mid-turn, so a stray human click
   // can't race the bot's own writes (it drives selectedMult/the log itself).
   var isBotTurn = botIndex(game) === st.currentPlayer;
   var padDisabled = st.finished || isBotTurn;
-  var numHtml = CRICKET_NUMS.map(function (num) {
+  var numHtml = CRICKET_NUMS.map(function (num, idx) {
     var isBull = num === 25;
     var disabled = padDisabled || (isBull && selectedMult === 3);
-    return '<button type="button" class="num-btn' + (isBull ? ' bull' : '') + '" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + CRICKET_LABELS[num] + '</button>';
+    // still tappable (a dart can land there), just shown struck like on the board
+    var dead = st.marks.every(function (pm) { return pm[idx] >= 3; });
+    return '<button type="button" class="num-btn' + (isBull ? ' bull' : '') + (dead ? ' dead' : '') + '" data-num="' + num + '" ' + (disabled ? 'disabled' : '') + '>' + CRICKET_LABELS[num] + '</button>';
   }).join('');
   els.numGrid.innerHTML = numHtml;
   els.missBtn.disabled = padDisabled;
@@ -105,7 +114,7 @@ function renderCricket(game) {
 }
 
 // darts thrown & marks landed per player across the whole game — the basis
-// for both the compact in-game stats row and the Stats tab's aggregate MPR.
+// for both the chalkboard's per-player footer and the Stats tab's aggregate MPR.
 function cricketDartStats(game) {
   var darts = game.players.map(function () { return 0; });
   var marks = game.players.map(function () { return 0; });
@@ -114,19 +123,6 @@ function cricketDartStats(game) {
     if (t.number) marks[t.player] += t.mult;
   });
   return game.players.map(function (_, pi) { return { darts: darts[pi], marks: marks[pi] }; });
-}
-
-// darts thrown & marks-per-3-darts (MPR) per player, kept to one compact row
-function statsRowHtml(game) {
-  var stats = cricketDartStats(game);
-  var html = '<tr class="stats-row"><th>Stats</th>';
-  game.players.forEach(function (name, pi) {
-    var d = stats[pi].darts;
-    var mpr = d ? (stats[pi].marks / d * 3) : 0;
-    html += '<td>' + d + ' flé · ' + mpr.toFixed(1) + ' mpr</td>';
-  });
-  html += '</tr>';
-  return html;
 }
 
 function renderThrowLogCricket(game, st) {
