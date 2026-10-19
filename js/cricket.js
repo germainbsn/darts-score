@@ -73,6 +73,7 @@ function renderCricketSlate(game, st) {
     var d = stats[c].darts, mpr = d ? (stats[c].marks / d * 3) : 0;
     html += '<div class="cs-foot' + (c === st.currentPlayer && live ? ' cur' : '') + '">' + d + ' flé · ' + mpr.toFixed(1) + ' mpr</div>';
   });
+  els.cricketTable.classList.toggle('many', game.players.length > 2);
   els.cricketTable.style.gridTemplateColumns = order.map(function (c) { return c === 'N' ? '50px' : 'minmax(64px, 1fr)'; }).join(' ');
   els.cricketTable.innerHTML = html;
 }
@@ -105,8 +106,13 @@ function renderCricket(game) {
 
   els.cricketTurnLabel.innerHTML = st.finished ? 'Partie terminée'
     : 'À <strong>' + escapeHtml(game.players[st.currentPlayer]) + '</strong> de jouer <span class="turn-dart">fléchette ' + (st.dartInTurn + 1) + '/3</span>';
+  // one dot per dart of the current turn: green on a cricket number, red on a miss
+  var turnDarts = st.dartInTurn ? (game.log || []).slice(-st.dartInTurn) : [];
   var dots = '';
-  for (var d = 0; d < 3; d++) { dots += '<span class="dart-dot' + (d < st.dartInTurn ? ' filled' : '') + '"></span>'; }
+  for (var d = 0; d < 3; d++) {
+    var t = turnDarts[d];
+    dots += '<span class="dart-dot' + (t ? (t.number ? ' hit' : ' miss') : '') + '"></span>';
+  }
   els.dartDots.innerHTML = dots;
 
   renderThrowLogCricket(game, st);

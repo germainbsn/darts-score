@@ -484,6 +484,9 @@ table.recap-table tfoot td, table.recap-table tfoot th{border-bottom:none; borde
 .cs-cell.cs-num.bull{font-size:.9rem;}
 .cs-cell.dead{opacity:.28;}
 .cs-cell.cs-num.dead{text-decoration:line-through;}
+/* 3+ players: the numbers column stays pinned while the players scroll sideways */
+.cricket-slate.many .cs-num{position:sticky; left:0; z-index:1; background:var(--board);}
+.cricket-slate.many .cs-cell.cs-num.dead{opacity:1; color:color-mix(in srgb, var(--cream) 28%, var(--board));}
 .cs-foot{padding:6px 2px 2px; text-align:center; font-family:"Space Mono",monospace; font-size:.66rem; color:color-mix(in srgb, var(--cream) 55%, transparent); white-space:nowrap;}
 .cricket-slate .mark{width:26px; height:26px; display:block; stroke:color-mix(in srgb, var(--cream) 85%, transparent); stroke-width:2.6; stroke-linecap:round; fill:none;}
 .cricket-slate .cs-cell.closed .mark{stroke:var(--gold);}
