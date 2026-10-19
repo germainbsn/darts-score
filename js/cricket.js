@@ -53,11 +53,17 @@ function renderCricketSlate(game, st) {
   var stats = cricketDartStats(game);
   var order = game.players.length === 2 ? [0, 'N', 1] : ['N'].concat(game.players.map(function (_, i) { return i; }));
   var live = !st.finished;
+  var lastTurns = cricketLastTurns(game);
   var html = '';
   order.forEach(function (c) {
     if (c === 'N') { html += '<div class="cs-head cs-num"></div>'; return; }
     var cls = (c === st.currentPlayer && live ? ' cur' : '') + (st.winnerIndex === c ? ' winner' : '');
-    html += '<div class="cs-head' + cls + '"><span class="cs-name">' + escapeHtml(game.players[c]) + '</span><b class="cs-score">' + st.scores[c] + '</b></div>';
+    var last = '';
+    for (var d = 0; d < 3; d++) {
+      var t = lastTurns[c][d];
+      last += t ? '<i class="' + (t.number ? 'm' + t.mult : 'miss') + '">' + cricketDartLabel(t) + '</i>' : '<i></i>';
+    }
+    html += '<div class="cs-head' + cls + '"><span class="cs-name">' + escapeHtml(game.players[c]) + '</span><b class="cs-score">' + st.scores[c] + '</b><span class="cs-last">' + last + '</span></div>';
   });
   CRICKET_NUMS.forEach(function (num, idx) {
     // closed by everyone: nobody can score on it any more
@@ -74,7 +80,7 @@ function renderCricketSlate(game, st) {
     html += '<div class="cs-foot' + (c === st.currentPlayer && live ? ' cur' : '') + '">' + d + ' flé · ' + mpr.toFixed(1) + ' mpr</div>';
   });
   els.cricketTable.classList.toggle('many', game.players.length > 2);
-  els.cricketTable.style.gridTemplateColumns = order.map(function (c) { return c === 'N' ? '50px' : 'minmax(64px, 1fr)'; }).join(' ');
+  els.cricketTable.style.gridTemplateColumns = order.map(function (c) { return c === 'N' ? '50px' : 'minmax(78px, 1fr)'; }).join(' ');
   els.cricketTable.innerHTML = html;
 }
 
@@ -117,6 +123,22 @@ function renderCricket(game) {
 
   renderThrowLogCricket(game, st);
   renderWinner(game, st.finished, st.winnerIndex);
+}
+
+// each player's most recent turn (the one in progress included), so the
+// darts just entered can be checked on the board. Turns are always 3 log
+// entries ("Tour raté" pads the rest with misses).
+function cricketLastTurns(game) {
+  var log = game.log || [];
+  var last = game.players.map(function () { return []; });
+  for (var i = 0; i < log.length; i += 3) { last[log[i].player] = log.slice(i, i + 3); }
+  return last;
+}
+// short dart label: 20, D19, T18, B, DB, or – for a miss
+function cricketDartLabel(t) {
+  if (!t.number) return '–';
+  if (t.number === 25) return t.mult === 2 ? 'DB' : 'B';
+  return (t.mult === 2 ? 'D' : t.mult === 3 ? 'T' : '') + t.number;
 }
 
 // darts thrown & marks landed per player across the whole game — the basis

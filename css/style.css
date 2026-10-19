@@ -478,6 +478,12 @@ table.recap-table tfoot td, table.recap-table tfoot th{border-bottom:none; borde
 .cs-score{font-family:"Fraunces",serif; font-weight:900; font-size:1.7rem; line-height:1.1; font-variant-numeric:tabular-nums lining-nums;}
 .cs-head.cur .cs-name, .cs-head.cur .cs-score{color:var(--gold);}
 .cs-head.winner .cs-score{color:var(--green);}
+/* the player's last turn, one box per dart */
+.cs-last{display:flex; gap:3px; margin-top:4px;}
+.cs-last i{width:22px; height:18px; display:flex; align-items:center; justify-content:center; border-radius:5px; font-style:normal; font-family:"Space Mono",monospace; font-size:.6rem; font-weight:700; letter-spacing:-.04em; background:color-mix(in srgb, var(--cream) 10%, transparent); color:var(--cream);}
+.cs-last i.m2{background:color-mix(in srgb, var(--green) 55%, transparent);}
+.cs-last i.m3{background:color-mix(in srgb, var(--red) 60%, transparent);}
+.cs-last i.miss{color:color-mix(in srgb, var(--cream) 45%, transparent);}
 .cs-cell{height:40px; display:flex; align-items:center; justify-content:center; border-bottom:1px dashed color-mix(in srgb, var(--cream) 14%, transparent);}
 .cs-cell.cur, .cs-head.cur, .cs-foot.cur{background:color-mix(in srgb, var(--gold) 14%, transparent);}
 .cs-cell.cs-num{font-family:"Fraunces",serif; font-weight:900; font-size:1.3rem; color:var(--cream);}
