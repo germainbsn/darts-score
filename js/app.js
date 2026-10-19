@@ -1367,7 +1367,7 @@ function checkoutTrendData(name, variant, period, doubleOut) {
 // Draws one line-trend chart into elsChart {wrap, svg, tooltip, empty} and wires
 // its hover crosshair/tooltip. `idPrefix` keeps each chart's internal SVG ids
 // unique on the page; `unit` is the short label shown after the value in the
-// tooltip; `countLabel(d)` formats the tooltip's parenthetical context (darts
+// tooltip; `countLabel(d)` (optional) formats the tooltip's parenthetical context (darts
 // thrown, finishes counted, ...) since it differs per chart.
 function renderTrendChart(data, elsChart, idPrefix, unit, countLabel) {
   elsChart.empty.hidden = data.length > 0;
@@ -1429,7 +1429,7 @@ function wireTrendHover(elsChart, idPrefix, data, xAt, viewboxW, unit, countLabe
     var scale = svg.getBoundingClientRect().width / viewboxW;
     elsChart.tooltip.style.left = (x * scale) + 'px';
     elsChart.tooltip.style.top = (y * scale) + 'px';
-    elsChart.tooltip.textContent = d.label + ' — ' + d.value.toFixed(1) + ' ' + unit + ' (' + countLabel(d) + ')';
+    elsChart.tooltip.textContent = d.label + ' — ' + d.value.toFixed(1) + ' ' + unit + (countLabel ? ' (' + countLabel(d) + ')' : '');
     elsChart.tooltip.hidden = false;
   }
   function hide() {
@@ -1454,8 +1454,7 @@ function renderMprChart() {
   if (statsFilterType !== 'cricket' || !statsSelectedPlayer) { els.mprChartCard.hidden = true; return; }
   els.mprChartCard.hidden = false;
   var data = mprTrendData(statsSelectedPlayer, mprChartPeriod);
-  renderTrendChart(data, { wrap: els.mprChartWrap, svg: els.mprChartSvg, tooltip: els.mprChartTooltip, empty: els.mprChartEmpty }, 'mpr', 'mpr',
-    function (d) { return d.count + ' flé'; });
+  renderTrendChart(data, { wrap: els.mprChartWrap, svg: els.mprChartSvg, tooltip: els.mprChartTooltip, empty: els.mprChartEmpty }, 'mpr', 'mpr');
 }
 els.mprPeriodSeg.addEventListener('click', function (e) {
   var b = e.target.closest('button');

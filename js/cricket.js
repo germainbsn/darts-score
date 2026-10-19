@@ -77,7 +77,7 @@ function renderCricketSlate(game, st) {
   order.forEach(function (c) {
     if (c === 'N') { html += '<div class="cs-foot cs-num"></div>'; return; }
     var d = stats[c].darts, mpr = d ? (stats[c].marks / d * 3) : 0;
-    html += '<div class="cs-foot' + (c === st.currentPlayer && live ? ' cur' : '') + '">' + d + ' flé · ' + mpr.toFixed(1) + ' mpr</div>';
+    html += '<div class="cs-foot' + (c === st.currentPlayer && live ? ' cur' : '') + '">' + mpr.toFixed(1) + ' mpr</div>';
   });
   els.cricketTable.classList.toggle('many', game.players.length > 2);
   els.cricketTable.style.gridTemplateColumns = order.map(function (c) { return c === 'N' ? '50px' : 'minmax(78px, 1fr)'; }).join(' ');
